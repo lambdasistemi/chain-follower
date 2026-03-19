@@ -15,5 +15,12 @@ jobs:
     runs-on: nixos
     steps:
       - uses: actions/checkout@v4
-      - name: Stub CI
-        run: echo "CI stub — will be replaced by real CI"
+
+      - name: Build
+        run: nix build --quiet
+
+      - name: Check formatting
+        run: nix develop --quiet -c just format-check
+
+      - name: Lint
+        run: nix develop --quiet -c just hlint
