@@ -1,0 +1,48 @@
+cabal-version:   3.4
+name:            chain-follower
+version:         0.1.0.0
+synopsis:        Abstract chain follower types
+description:
+  Generic chain-following abstractions parameterized over block,
+  point, and slot types. Provides Follower, Intersector, and
+  ProgressOrRewind types for building chain synchronization
+  clients without coupling to any specific blockchain.
+
+license:         Apache-2.0
+license-file:    LICENSE
+author:          Paolo Veronelli
+maintainer:      paolo.veronelli@gmail.com
+category:        Network
+build-type:      Simple
+extra-doc-files:
+  CHANGELOG.md
+  README.md
+
+homepage:        https://github.com/lambdasistemi/chain-follower
+bug-reports:     https://github.com/lambdasistemi/chain-follower/issues
+
+common warnings
+  ghc-options:
+    -Wall -Werror -Wunused-imports -Wunused-packages
+    -Wmissing-export-lists -Wname-shadowing -Wredundant-constraints
+
+  default-extensions:
+    DataKinds
+    DerivingStrategies
+    DuplicateRecordFields
+    FlexibleContexts
+    GADTs
+    ImportQualifiedPost
+    LambdaCase
+    NamedFieldPuns
+    OverloadedStrings
+    ScopedTypeVariables
+    StrictData
+    TypeFamilies
+
+library
+  import:           warnings
+  exposed-modules:  ChainFollower
+  build-depends:    base >=4.17 && <5
+  hs-source-dirs:   lib
+  default-language: Haskell2010
