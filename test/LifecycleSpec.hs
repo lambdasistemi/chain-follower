@@ -10,7 +10,7 @@ import ChainFollower.Runner
     , processBlock
     )
 import Composed (ComposedInv, composedInit)
-import Control.Monad (foldM)
+import Control.Monad (foldM, foldM_)
 import Database.KV.Transaction
     ( Transaction
     , mapColumns
@@ -80,18 +80,17 @@ spec = describe "Lifecycle" $ do
                         Nothing
                 following <- resumeFollowing backend
                 -- Follow 5 more blocks
-                _ <-
-                    foldM
-                        ( \phase slot ->
-                            runTx $
-                                processBlock
-                                    Rollbacks
-                                    slot
-                                    (mkBlock slot)
-                                    phase
-                        )
-                        (InFollowing following)
-                        [11 .. 15]
+                foldM_
+                    ( \phase slot ->
+                        runTx $
+                            processBlock
+                                Rollbacks
+                                slot
+                                (mkBlock slot)
+                                phase
+                    )
+                    (InFollowing following)
+                    [11 .. 15]
                 -- Verify state matches restoring all 15
                 actual <- snapshotState runTx
                 expected <- withTempDB $ \runTx2 -> do
@@ -101,18 +100,17 @@ spec = describe "Lifecycle" $ do
                             0
                             Nothing
                     restoring2 <- startRestoring backend
-                    _ <-
-                        foldM
-                            ( \phase slot ->
-                                runTx2 $
-                                    processBlock
-                                        Rollbacks
-                                        slot
-                                        (mkBlock slot)
-                                        phase
-                            )
-                            (InRestoration restoring2)
-                            [1 .. 15]
+                    foldM_
+                        ( \phase slot ->
+                            runTx2 $
+                                processBlock
+                                    Rollbacks
+                                    slot
+                                    (mkBlock slot)
+                                    phase
+                        )
+                        (InRestoration restoring2)
+                        [1 .. 15]
                     snapshotState runTx2
                 actual `shouldBe` expected
                 -- Suppress unused warning
@@ -130,18 +128,17 @@ spec = describe "Lifecycle" $ do
                             0
                             Nothing
                     restoring <- startRestoring backend
-                    _ <-
-                        foldM
-                            ( \phase block ->
-                                runTx $
-                                    processBlock
-                                        Rollbacks
-                                        (blockSlot block)
-                                        block
-                                        phase
-                            )
-                            (InRestoration restoring)
-                            blocks
+                    foldM_
+                        ( \phase block ->
+                            runTx $
+                                processBlock
+                                    Rollbacks
+                                    (blockSlot block)
+                                    block
+                                    phase
+                        )
+                        (InRestoration restoring)
+                        blocks
                     snapshotState runTx
                 stateB <- withTempDB $ \runTx -> do
                     runTx $
@@ -150,18 +147,17 @@ spec = describe "Lifecycle" $ do
                             0
                             Nothing
                     following <- resumeFollowing backend
-                    _ <-
-                        foldM
-                            ( \phase block ->
-                                runTx $
-                                    processBlock
-                                        Rollbacks
-                                        (blockSlot block)
-                                        block
-                                        phase
-                            )
-                            (InFollowing following)
-                            blocks
+                    foldM_
+                        ( \phase block ->
+                            runTx $
+                                processBlock
+                                    Rollbacks
+                                    (blockSlot block)
+                                    block
+                                    phase
+                        )
+                        (InFollowing following)
+                        blocks
                     snapshotState runTx
                 stateA `shouldBe` stateB
 
@@ -180,18 +176,17 @@ spec = describe "Lifecycle" $ do
                                     Nothing
                             following <-
                                 resumeFollowing backend
-                            _ <-
-                                foldM
-                                    ( \phase slot ->
-                                        runTx $
-                                            processBlock
-                                                Rollbacks
-                                                slot
-                                                (mkBlock slot)
-                                                phase
-                                    )
-                                    (InFollowing following)
-                                    [1 .. 5]
+                            foldM_
+                                ( \phase slot ->
+                                    runTx $
+                                        processBlock
+                                            Rollbacks
+                                            slot
+                                            (mkBlock slot)
+                                            phase
+                                )
+                                (InFollowing following)
+                                [1 .. 5]
                             snapshotState runTx
                     -- Session 2: reopen and verify
                     stateAfterReopen <-

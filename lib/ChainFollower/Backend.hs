@@ -12,6 +12,8 @@ module ChainFollower.Backend
     , liftInit
     ) where
 
+import Data.Bifunctor (second)
+
 {- |
 Module      : ChainFollower.Backend
 Description : CPS backend interface for chain followers
@@ -138,8 +140,8 @@ liftRestoring
     -> Restoring m t' block inv
 liftRestoring f Restoring{restore, toFollowing} =
     Restoring
-        { restore = \block ->
-            f $ fmap (liftRestoring f) (restore block)
+        { restore =
+            f . fmap (liftRestoring f) . restore
         , toFollowing =
             fmap (liftFollowing f) toFollowing
         }
@@ -154,17 +156,15 @@ liftFollowing
     -> Following m t' block inv
 liftFollowing f Following{follow, toRestoring, applyInverse} =
     Following
-        { follow = \block ->
-            f $
-                fmap
-                    ( \(inv, next) ->
-                        (inv, liftFollowing f next)
-                    )
-                    (follow block)
+        { follow =
+            f
+                . fmap
+                    (second (liftFollowing f))
+                . follow
         , toRestoring =
             fmap (liftRestoring f) toRestoring
-        , applyInverse = \inv ->
-            f (applyInverse inv)
+        , applyInverse =
+            f . applyInverse
         }
 
 {- | Lift an 'Init' through a natural transformation
