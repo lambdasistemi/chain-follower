@@ -8,9 +8,14 @@ import ChainFollower.Laws
     ( BackendHarness (..)
     , prop_backendIsSwap
     , prop_dfsEquivCanonical
+    , prop_historyMatchesMetadata
     , prop_treeWellFormed
     )
-import ChainFollower.MockChain (BlockTree (..))
+import ChainFollower.MockChain
+    ( BlockTree (..)
+    , canonicalPath
+    , dfs
+    )
 import Composed (ComposedInv, composedInit)
 import Database.KV.Transaction (mapColumns)
 import Database.RocksDB (BatchOp, ColumnFamily)
@@ -49,6 +54,7 @@ harness
         Int
         Block
         ComposedInv
+        Int
         StateSnapshot
 harness =
     BackendHarness
@@ -206,3 +212,27 @@ spec =
                                     prop_dfsEquivCanonical
                                         harness
                                         tree
+
+            describe
+                "prop_historyMatchesMetadata"
+                $ do
+                    it
+                        "history after forks matches canonical metadata"
+                        $ forAll genTree
+                        $ \tree ->
+                            property $
+                                assertLaw $
+                                    prop_historyMatchesMetadata
+                                        harness
+                                        blockMeta
+                                        (dfs tree)
+                                        (canonicalPath tree)
+
+-- | Expected metadata: total transfer amount.
+blockMeta :: Block -> Maybe Int
+blockMeta block =
+    Just $
+        sum
+            [ transferAmount t
+            | t <- blockTransfers block
+            ]

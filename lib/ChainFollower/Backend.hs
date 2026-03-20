@@ -12,8 +12,6 @@ module ChainFollower.Backend
     , liftInit
     ) where
 
-import Data.Bifunctor (second)
-
 {- |
 Module      : ChainFollower.Backend
 Description : CPS backend interface for chain followers
@@ -52,15 +50,15 @@ and stores nothing.
 @block@ — the block type
 @inv@ — inverse operation type (used after transition)
 -}
-data Restoring m t block inv = Restoring
+data Restoring m t block inv meta = Restoring
     { restore
         :: block
-        -> t (Restoring m t block inv)
+        -> t (Restoring m t block inv meta)
     {- ^ Ingest a block. Returns the next continuation.
     No inverse operations, no state to checkpoint.
     -}
     , toFollowing
-        :: m (Following m t block inv)
+        :: m (Following m t block inv meta)
     {- ^ Transition to following mode. Runs in @m@
     (not in a transaction) because the transition
     may involve replaying a journal, checkpointing,
@@ -71,25 +69,31 @@ data Restoring m t block inv = Restoring
 {- | Following phase continuation.
 
 During following the backend processes blocks near the
-chain tip. Each block produces inverse operations that
-the chain follower stores for rollback. The backend's
-columns are queryable in this phase.
+chain tip. Each block produces inverse operations and
+optional metadata that the chain follower stores for
+rollback. The backend's columns are queryable in this
+phase.
 
 @t@ — transaction monad (shared with chain follower)
 @block@ — the block type
 @inv@ — inverse operation type
+@meta@ — per-block metadata (e.g. merkle root)
 -}
-data Following m t block inv = Following
+data Following m t block inv meta = Following
     { follow
         :: block
-        -> t (inv, Following m t block inv)
-    {- ^ Process a block. Returns the inverse operations
-    (for rollback) and the next continuation.
-    Runs in @t@ — the chain follower stores @inv@
-    in the same transaction.
+        -> t
+            ( inv
+            , Maybe meta
+            , Following m t block inv meta
+            )
+    {- ^ Process a block. Returns the inverse operations,
+    optional metadata, and the next continuation.
+    Runs in @t@ — the chain follower stores both
+    @inv@ and @meta@ in the same transaction.
     -}
     , toRestoring
-        :: m (Restoring m t block inv)
+        :: m (Restoring m t block inv meta)
     {- ^ Transition to restoration mode. Runs in @m@
     because the transition may involve cleanup,
     disabling queries, or other IO side effects.
@@ -111,16 +115,16 @@ is executed. This lets the backend run phase-specific
 initialization (replay journals, open cursors, etc.)
 without knowing which phase will be selected.
 -}
-data Init m t block inv = Init
+data Init m t block inv meta = Init
     { startRestoring
-        :: m (Restoring m t block inv)
+        :: m (Restoring m t block inv meta)
     {- ^ Set up for restoration mode. Called when
     the chain follower has no checkpoint or is
     starting fresh. Runs in @m@ so the backend
     can initialize internal state.
     -}
     , resumeFollowing
-        :: m (Following m t block inv)
+        :: m (Following m t block inv meta)
     {- ^ Set up for following mode. Called when the
     chain follower resumes from a checkpoint near
     the tip. Runs in @m@ so the backend can replay
@@ -136,8 +140,8 @@ column type via @mapColumns@.
 liftRestoring
     :: (Functor m, Functor t)
     => (forall a. t a -> t' a)
-    -> Restoring m t block inv
-    -> Restoring m t' block inv
+    -> Restoring m t block inv meta
+    -> Restoring m t' block inv meta
 liftRestoring f Restoring{restore, toFollowing} =
     Restoring
         { restore =
@@ -152,14 +156,16 @@ on the transaction monad.
 liftFollowing
     :: (Functor m, Functor t)
     => (forall a. t a -> t' a)
-    -> Following m t block inv
-    -> Following m t' block inv
+    -> Following m t block inv meta
+    -> Following m t' block inv meta
 liftFollowing f Following{follow, toRestoring, applyInverse} =
     Following
         { follow =
             f
                 . fmap
-                    (second (liftFollowing f))
+                    ( \(inv, meta, next) ->
+                        (inv, meta, liftFollowing f next)
+                    )
                 . follow
         , toRestoring =
             fmap (liftRestoring f) toRestoring
@@ -173,8 +179,8 @@ on the transaction monad.
 liftInit
     :: (Functor m, Functor t)
     => (forall a. t a -> t' a)
-    -> Init m t block inv
-    -> Init m t' block inv
+    -> Init m t block inv meta
+    -> Init m t' block inv meta
 liftInit f Init{startRestoring, resumeFollowing} =
     Init
         { startRestoring =
