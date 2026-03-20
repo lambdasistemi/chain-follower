@@ -272,37 +272,49 @@ main = do
             putStrLn ""
             putStrLn "  Controls:"
             putStrLn "    [space/f]  produce next block (roll forward)"
+            putStrLn "    [t]        transition to following mode"
             putStrLn "    [r]        fork! roll back 1 slot"
-            putStrLn "    [d]        delete DB and quit (fresh start next time)"
             putStrLn "    [q]        quit (state persists for next run)"
+            putStrLn "    [d]        show how to delete DB for fresh start"
+            putStrLn ""
+            putStrLn $
+                "  DB path: " ++ dbPath
+            putStrLn
+                "  Quit and rerun to see Init resume from persisted state."
             putStrLn ""
 
-            -- ── Initialization ───────────────────────────
-            putStrLn "  Initializing..."
+            -- ── Initialization via Init ──────────────────
+            putStrLn "  Querying rollback tip..."
             mTip <- runTx $ Rollbacks.queryTip Rollbacks
             phase <- case mTip of
                 Nothing -> do
-                    putStrLn "  No rollback tip found. Fresh start."
-                    putStrLn "  Setting up rollback sentinel at slot 0."
+                    putStrLn "  No rollback tip found — this is a fresh start."
+                    putStrLn ""
+                    putStrLn "  The chain follower has no checkpoint, so it calls"
+                    putStrLn "  Init.startRestoring to set up the backend for"
+                    putStrLn "  bulk ingestion (no inverses, no rollback support)."
+                    putStrLn ""
                     runTx $
                         Rollbacks.armageddonSetup Rollbacks 0 Nothing
-                    putStrLn ""
-                    putStrLn "  Phase: RESTORATION"
-                    putStrLn "  The follower is far from the tip."
-                    putStrLn "  Blocks are ingested fast, no inverses stored."
-                    putStrLn ""
                     r <- startRestoring backend
+                    putStrLn "  Phase: RESTORATION"
+                    putStrLn "  Press f to ingest blocks, t to transition to following."
+                    putStrLn ""
                     pure (InRestoration r)
                 Just tip -> do
                     putStrLn $
-                        "  Found rollback tip at slot "
+                        "  Rollback tip found at slot "
                             ++ show tip
-                            ++ ". Resuming."
+                            ++ " — resuming!"
                     putStrLn ""
-                    putStrLn "  Phase: FOLLOWING"
-                    putStrLn "  Near the tip, full inverse tracking."
+                    putStrLn "  The chain follower found a checkpoint, so it calls"
+                    putStrLn "  Init.resumeFollowing to restore the backend for"
+                    putStrLn "  near-tip operation with full rollback support."
                     putStrLn ""
                     f <- resumeFollowing backend
+                    putStrLn "  Phase: FOLLOWING"
+                    putStrLn "  Press f to follow blocks, r to simulate a fork."
+                    putStrLn ""
                     pure (InFollowing f)
 
             printState runTx
@@ -336,11 +348,16 @@ main = do
                     putStrLn ""
                     case c of
                         'q' -> do
-                            putStrLn "  Quit. State persisted."
+                            putStrLn "  Quit. State persisted to RocksDB."
+                            putStrLn ""
+                            putStrLn "  Run again — Init will find the rollback tip"
                             putStrLn $
-                                "  Run again to resume from slot "
+                                "  at slot "
                                     ++ show (slot - 1)
-                                    ++ "."
+                                    ++ " and resume in FOLLOWING mode."
+                            putStrLn ""
+                            putStrLn $
+                                "  To start fresh: rm -rf " ++ dbPath
                         'Q' -> do
                             putStrLn "  Quit. State persisted."
                         'd' -> do
