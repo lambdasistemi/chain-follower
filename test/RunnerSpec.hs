@@ -40,19 +40,22 @@ import Test.Hspec.QuickCheck (modifyMaxSuccess)
 import Test.QuickCheck
     ( Gen
     , chooseInt
+    , elements
     , forAll
+    , listOf1
     , property
     )
 import TutorialDB
     ( AllCols (..)
     , RunTx
     , StateSnapshot
+    , accounts
     , mkBlock
     , rollbackWindow
     , snapshotState
     , withTempDB
     )
-import Types (Block (..))
+import Types (Block (..), Transfer (..))
 
 -- | The backend lifted into the full column type.
 backend
@@ -146,12 +149,27 @@ runCanonicalClean runTx blocks = do
         blocks
     snapshotState runTx
 
+-- * Random block generators
+
+-- | Generate a random transfer.
+genTransfer :: Gen Transfer
+genTransfer =
+    Transfer
+        <$> elements accounts
+        <*> elements accounts
+        <*> chooseInt (1, 3000)
+
+-- | Generate a random block at a given slot.
+genBlock :: Int -> Gen Block
+genBlock slot =
+    Block slot <$> listOf1 genTransfer
+
 -- * Generators
 
 {- | Generate a sequence of chain events with forks.
 Slots start at 'slotBase' so all slot numbers have
 the same digit count (avoids lexicographic ordering
-issues in RocksDB key encoding).
+issues in RocksDB key encoding). Uses random blocks.
 -}
 genChainEvents :: Gen [ChainEvent Int Block]
 genChainEvents = do
@@ -167,7 +185,8 @@ genChainEvents = do
     go _nextSlot _tip 0 acc = pure (reverse acc)
     go nextSlot tip remaining acc
         | tip < 3 = do
-            let event = Forward nextSlot (mkBlock nextSlot)
+            block <- genBlock nextSlot
+            let event = Forward nextSlot block
             go
                 (nextSlot + 1)
                 (tip + 1)
@@ -196,7 +215,8 @@ genChainEvents = do
                         (remaining - 1)
                         (RollBack target : acc)
                 else do
-                    let event = Forward nextSlot (mkBlock nextSlot)
+                    block <- genBlock nextSlot
+                    let event = Forward nextSlot block
                     go
                         (nextSlot + 1)
                         (tip + 1)
@@ -211,10 +231,9 @@ genBlockTree
     :: Int -> Gen (BlockTree Int Block)
 genBlockTree nextSlot = do
     nChildren <- chooseInt (0 :: Int, 3)
+    block <- genBlock nextSlot
     if nChildren == 0
-        then
-            pure $
-                Leaf nextSlot (mkBlock nextSlot)
+        then pure $ Leaf nextSlot block
         else do
             let mkShallow s = do
                     d <- chooseInt (1, rollbackWindow)
@@ -235,40 +254,32 @@ genBlockTree nextSlot = do
                         mkDeep
                             (nextSlot + nChildren)
                     pure $ nonRight ++ [right]
-            pure $
-                Fork
-                    nextSlot
-                    (mkBlock nextSlot)
-                    children
+            pure $ Fork nextSlot block children
 
 -- | Generate a tree with bounded depth.
 genBoundedTree
     :: Int -> Int -> Gen (BlockTree Int Block)
-genBoundedTree nextSlot maxDepth
-    | maxDepth <= 1 =
-        pure $ Leaf nextSlot (mkBlock nextSlot)
-    | otherwise = do
-        nChildren <- chooseInt (0 :: Int, 2)
-        if nChildren == 0
-            then
-                pure $
-                    Leaf nextSlot (mkBlock nextSlot)
-            else do
-                children <-
-                    mapM
-                        ( \s ->
-                            genBoundedTree
-                                s
-                                (maxDepth - 1)
-                        )
-                        [ nextSlot + 1
-                        .. nextSlot + nChildren
-                        ]
-                pure $
-                    Fork
-                        nextSlot
-                        (mkBlock nextSlot)
-                        children
+genBoundedTree nextSlot maxDepth = do
+    block <- genBlock nextSlot
+    if maxDepth <= 1
+        then pure $ Leaf nextSlot block
+        else do
+            nChildren <- chooseInt (0 :: Int, 2)
+            if nChildren == 0
+                then pure $ Leaf nextSlot block
+                else do
+                    children <-
+                        mapM
+                            ( \s ->
+                                genBoundedTree
+                                    s
+                                    (maxDepth - 1)
+                            )
+                            [ nextSlot + 1
+                            .. nextSlot + nChildren
+                            ]
+                    pure $
+                        Fork nextSlot block children
 
 -- * Properties
 

@@ -24,18 +24,20 @@ import Test.Hspec.QuickCheck (modifyMaxSuccess)
 import Test.QuickCheck
     ( Gen
     , chooseInt
+    , elements
     , forAll
+    , listOf1
     , property
     )
 import TutorialDB
     ( AllCols (..)
     , StateSnapshot
-    , mkBlock
+    , accounts
     , rollbackWindow
     , snapshotState
     , withTempDB
     )
-import Types (Block (..))
+import Types (Block (..), Transfer (..))
 
 -- | The tutorial backend harness.
 harness
@@ -65,19 +67,35 @@ harness =
 slotBase :: Int
 slotBase = 100
 
+-- | Generate a random transfer.
+genTransfer :: Gen Transfer
+genTransfer =
+    Transfer
+        <$> elements accounts
+        <*> elements accounts
+        <*> chooseInt (1, 3000)
+
+-- | Generate a random block at a given slot.
+genBlock :: Int -> Gen Block
+genBlock slot =
+    Block slot <$> listOf1 genTransfer
+
 -- | Generate seed blocks as (slot, block) pairs.
 genSeedBlocks :: Gen [(Int, Block)]
 genSeedBlocks = do
     n <- chooseInt (0, 10)
-    pure
-        [ (slotBase + i, mkBlock (slotBase + i))
-        | i <- [0 .. n - 1]
-        ]
+    mapM
+        ( \i -> do
+            b <- genBlock (slotBase + i)
+            pure (slotBase + i, b)
+        )
+        [0 .. n - 1]
 
 -- | Generate a single test block.
 genTestBlock :: Int -> Gen (Int, Block)
-genTestBlock nextSlot =
-    pure (nextSlot, mkBlock nextSlot)
+genTestBlock slot = do
+    b <- genBlock slot
+    pure (slot, b)
 
 -- | Generate a well-formed block tree.
 genTree :: Gen (BlockTree Int Block)
@@ -86,10 +104,9 @@ genTree = genBlockTree slotBase
 genBlockTree :: Int -> Gen (BlockTree Int Block)
 genBlockTree nextSlot = do
     nChildren <- chooseInt (0 :: Int, 3)
+    block <- genBlock nextSlot
     if nChildren == 0
-        then
-            pure $
-                Leaf nextSlot (mkBlock nextSlot)
+        then pure $ Leaf nextSlot block
         else do
             let mkShallow s = do
                     d <- chooseInt (1, rollbackWindow)
@@ -110,39 +127,31 @@ genBlockTree nextSlot = do
                         mkDeep
                             (nextSlot + nChildren)
                     pure $ nonRight ++ [right]
-            pure $
-                Fork
-                    nextSlot
-                    (mkBlock nextSlot)
-                    children
+            pure $ Fork nextSlot block children
 
 genBounded
     :: Int -> Int -> Gen (BlockTree Int Block)
-genBounded nextSlot maxDepth
-    | maxDepth <= 1 =
-        pure $ Leaf nextSlot (mkBlock nextSlot)
-    | otherwise = do
-        nChildren <- chooseInt (0 :: Int, 2)
-        if nChildren == 0
-            then
-                pure $
-                    Leaf nextSlot (mkBlock nextSlot)
-            else do
-                children <-
-                    mapM
-                        ( \s ->
-                            genBounded
-                                s
-                                (maxDepth - 1)
-                        )
-                        [ nextSlot + 1
-                        .. nextSlot + nChildren
-                        ]
-                pure $
-                    Fork
-                        nextSlot
-                        (mkBlock nextSlot)
-                        children
+genBounded nextSlot maxDepth = do
+    block <- genBlock nextSlot
+    if maxDepth <= 1
+        then pure $ Leaf nextSlot block
+        else do
+            nChildren <- chooseInt (0 :: Int, 2)
+            if nChildren == 0
+                then pure $ Leaf nextSlot block
+                else do
+                    children <-
+                        mapM
+                            ( \s ->
+                                genBounded
+                                    s
+                                    (maxDepth - 1)
+                            )
+                            [ nextSlot + 1
+                            .. nextSlot + nChildren
+                            ]
+                    pure $
+                        Fork nextSlot block children
 
 -- | Assert a law result.
 assertLaw :: IO (Maybe String) -> IO ()
