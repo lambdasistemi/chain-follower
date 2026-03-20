@@ -1,5 +1,4 @@
 var _cy = null;
-var _expandCollapse = null;
 
 export const initCytoscape = (containerId) => (elements) => () => {
   var container = document.getElementById(containerId);
@@ -20,24 +19,14 @@ export const initCytoscape = (containerId) => (elements) => () => {
           label: "data(label)",
           "text-valign": "center",
           "text-halign": "center",
-          "font-size": "11px",
+          "font-size": "10px",
           "background-color": "#4a90d9",
           color: "#fff",
           "text-outline-color": "#4a90d9",
-          "text-outline-width": 2,
+          "text-outline-width": 1.5,
           width: "label",
           height: "label",
-          padding: "8px",
-          shape: "round-rectangle",
-        },
-      },
-      {
-        selector: "node.module",
-        style: {
-          "background-color": "#2c3e50",
-          "text-outline-color": "#2c3e50",
-          "font-size": "14px",
-          "font-weight": "bold",
+          padding: "6px",
           shape: "round-rectangle",
         },
       },
@@ -47,7 +36,9 @@ export const initCytoscape = (containerId) => (elements) => () => {
           "background-color": "#8e44ad",
           "text-outline-color": "#8e44ad",
           "font-size": "12px",
+          "font-weight": "bold",
           shape: "diamond",
+          padding: "10px",
         },
       },
       {
@@ -55,7 +46,6 @@ export const initCytoscape = (containerId) => (elements) => () => {
         style: {
           "background-color": "#27ae60",
           "text-outline-color": "#27ae60",
-          "font-size": "10px",
           shape: "ellipse",
         },
       },
@@ -64,39 +54,38 @@ export const initCytoscape = (containerId) => (elements) => () => {
         style: {
           "background-color": "#e67e22",
           "text-outline-color": "#e67e22",
-          "font-size": "9px",
           shape: "rectangle",
+          "font-size": "9px",
         },
       },
       {
-        selector: ":parent",
+        selector: "node.field",
         style: {
-          "background-opacity": 0.1,
-          "border-width": 2,
-          "border-color": "#555",
-          "text-valign": "top",
-          "text-halign": "center",
-          "font-size": "14px",
-          padding: "20px",
+          "background-color": "#3498db",
+          "text-outline-color": "#3498db",
+          shape: "round-rectangle",
+          "font-size": "8px",
         },
       },
       {
         selector: "edge",
         style: {
-          width: 1.5,
-          "line-color": "#888",
-          "target-arrow-color": "#888",
+          width: 1,
+          "line-color": "#555",
+          "target-arrow-color": "#555",
           "target-arrow-shape": "triangle",
           "curve-style": "bezier",
-          "arrow-scale": 0.8,
+          "arrow-scale": 0.7,
+          opacity: 0.6,
         },
       },
       {
         selector: "edge.type-edge",
         style: {
-          "line-style": "dashed",
-          "line-color": "#b07cd8",
-          "target-arrow-color": "#b07cd8",
+          "line-style": "dotted",
+          "line-color": "#7f4a9e",
+          "target-arrow-color": "#7f4a9e",
+          opacity: 0.3,
         },
       },
       {
@@ -110,15 +99,17 @@ export const initCytoscape = (containerId) => (elements) => () => {
         selector: ".highlighted",
         style: {
           "background-color": "#e74c3c",
+          "text-outline-color": "#e74c3c",
           "line-color": "#e74c3c",
           "target-arrow-color": "#e74c3c",
-          width: 3,
+          width: 2.5,
+          opacity: 1,
         },
       },
       {
         selector: ".dimmed",
         style: {
-          opacity: 0.2,
+          opacity: 0.1,
         },
       },
     ],
@@ -126,37 +117,18 @@ export const initCytoscape = (containerId) => (elements) => () => {
     wheelSensitivity: 0.3,
   });
 
-  // Run elk layout
+  // Run ELK layered layout — flat, no compounds
   _cy.layout({
     name: "elk",
     elk: {
       algorithm: "layered",
       "elk.direction": "DOWN",
-      "elk.layered.spacing.nodeNodeBetweenLayers": "80",
-      "elk.spacing.nodeNode": "40",
-      "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+      "elk.layered.spacing.nodeNodeBetweenLayers": "60",
+      "elk.spacing.nodeNode": "30",
     },
     fit: true,
-    padding: 30,
+    padding: 40,
   }).run();
-
-  // Initialize expand-collapse
-  _expandCollapse = _cy.expandCollapse({
-    layoutBy: {
-      name: "elk",
-      elk: {
-        algorithm: "layered",
-        "elk.direction": "DOWN",
-        "elk.hierarchyHandling": "INCLUDE_CHILDREN",
-      },
-      fit: true,
-      padding: 30,
-    },
-    fisheye: false,
-    animate: true,
-    animationDuration: 300,
-    undoable: false,
-  });
 };
 
 export const onNodeTap = (callback) => () => {
@@ -195,7 +167,10 @@ export const fitToNode = (nodeId) => () => {
   var node = _cy.getElementById(nodeId);
   if (node.empty()) return;
   _cy.animate({
-    fit: { eles: node.neighborhood().add(node), padding: 50 },
+    fit: {
+      eles: node.neighborhood().add(node),
+      padding: 50,
+    },
     duration: 300,
   });
 };
@@ -205,29 +180,7 @@ export const fitAll = () => {
   _cy.animate({ fit: { padding: 30 }, duration: 300 });
 };
 
-export const collapseNode = (nodeId) => () => {
-  if (!_cy || !_expandCollapse) return;
-  var node = _cy.getElementById(nodeId);
-  if (node.nonempty() && node.isParent()) {
-    _expandCollapse.collapse(node);
-  }
-};
-
-export const expandNode = (nodeId) => () => {
-  if (!_cy || !_expandCollapse) return;
-  var node = _cy.getElementById(nodeId);
-  if (node.nonempty()) {
-    _expandCollapse.expand(node);
-  }
-};
-
-export const collapseAll = () => {
-  if (!_cy || !_expandCollapse) return;
-  _expandCollapse.collapseAll();
-};
-
-export const expandAll = () => {
-  if (!_cy || !_expandCollapse) return;
-  _expandCollapse.expandAll();
-};
-
+export const collapseNode = (_nodeId) => () => {};
+export const expandNode = (_nodeId) => () => {};
+export const collapseAll = () => {};
+export const expandAll = () => {};
