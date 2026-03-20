@@ -33,16 +33,16 @@ import ChainFollower.Backend
     ( Following (..)
     , Restoring (..)
     )
+import ChainFollower.Rollbacks.Column
+    ( RollbackCol
+    )
+import ChainFollower.Rollbacks.Store qualified as Rollbacks
+import ChainFollower.Rollbacks.Types
+    ( RollbackPoint (..)
+    )
 import Database.KV.Transaction
     ( GCompare
     , Transaction
-    )
-import MTS.Rollbacks.Column
-    ( RollbackCol
-    )
-import MTS.Rollbacks.Store qualified as Rollbacks
-import MTS.Rollbacks.Types
-    ( RollbackPoint (..)
     )
 
 -- | Shorthand for the transaction type used in phases.
