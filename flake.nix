@@ -32,8 +32,9 @@
                 cabal-fmt = indexTool;
                 fourmolu = indexTool;
                 hlint = indexTool;
+                calligraphy = indexTool;
               };
-              buildInputs = [ pkgs.just pkgs.nixfmt-classic ];
+              buildInputs = [ pkgs.just pkgs.nixfmt-classic pkgs.graphviz ];
             };
           };
         in {
