@@ -1,0 +1,35 @@
+name: Deploy Explorer
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  pages: write
+  id-token: write
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: nixos
+    env:
+      PATH: /run/current-system/sw/bin:/usr/bin:/bin
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bundle explorer
+        working-directory: explorer
+        run: nix develop --quiet -c spago bundle
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: explorer/dist
+      - id: deployment
+        uses: actions/deploy-pages@v4
