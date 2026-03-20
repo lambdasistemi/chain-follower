@@ -1,0 +1,59 @@
+site_name: Chain Follower
+site_url: https://lambdasistemi.github.io/chain-follower/
+repo_url: https://github.com/lambdasistemi/chain-follower
+
+theme:
+  name: material
+  palette:
+    scheme: slate
+  features:
+    - navigation.indexes
+    - navigation.sections
+    - navigation.path
+    - toc.integrate
+    - content.code.copy
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - tables
+  - footnotes
+  - def_list
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+
+nav:
+  - Home: index.md
+  - Concepts:
+    - Overview: concepts/overview.md
+    - Block Tree Model: concepts/block-tree.md
+    - Swap Partition: concepts/swap-partition.md
+    - Phases: concepts/phases.md
+  - Architecture:
+    - Module Map: architecture/modules.md
+    - Runner: architecture/runner.md
+    - Rollback Store: architecture/rollback-store.md
+    - Backend Interface: architecture/backend.md
+    - Mock Chain: architecture/mock-chain.md
+  - Lean Formalization:
+    - Overview: lean/overview.md
+    - Theorems: lean/theorems.md
+  - Testing:
+    - Laws: testing/laws.md
+    - Properties: testing/properties.md
+  - Tutorial:
+    - Running: tutorial/running.md
+    - Walkthrough: tutorial/walkthrough.md
