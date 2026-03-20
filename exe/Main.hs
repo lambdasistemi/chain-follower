@@ -1,451 +1,460 @@
 module Main (main) where
 
-import Audit (AuditCols (..))
-import Balances (BalanceCols (..))
 import ChainFollower.Backend
-    ( Init (..)
+    ( Following
+    , Init (..)
     , liftInit
     )
 import ChainFollower.Rollbacks.Store qualified as Rollbacks
-import ChainFollower.Rollbacks.Types
-    ( RollbackPoint (..)
-    )
 import ChainFollower.Runner
     ( Phase (..)
     , processBlock
     , rollbackTo
     )
-import Composed
-    ( ComposedInv (..)
-    , UnifiedCols (..)
-    , composedInit
-    )
-import Control.Lens (prism')
-import Control.Monad (forM_, void, when)
-import Data.ByteString.Char8 qualified as BS8
-import Data.Default (Default (..))
-import Data.IORef
-    ( newIORef
-    , readIORef
-    , writeIORef
-    )
-import Data.Type.Equality ((:~:) (..))
-import Database.KV.Database
-    ( KV
-    , mkColumns
-    )
-import Database.KV.RocksDB (mkRocksDBDatabase)
+import Composed (ComposedInv, composedInit)
+import Control.Monad (forM_, when)
 import Database.KV.Transaction
-    ( Codecs (..)
-    , DSum (..)
-    , GCompare (..)
-    , GEq (..)
-    , GOrdering (..)
-    , Transaction
-    , fromPairList
+    ( Transaction
     , mapColumns
-    , query
-    , runTransactionUnguarded
     )
-import Database.RocksDB
-    ( BatchOp
-    , ColumnFamily
-    , Config (createIfMissing)
-    , DB (..)
-    , withDBCF
+import Database.RocksDB (BatchOp, ColumnFamily)
+import TutorialDB
+    ( AllCols (..)
+    , ChainEvent (..)
+    , RunTx
+    , StateSnapshot (..)
+    , mkBlock
+    , resolveCanonical
+    , snapshotState
+    , withTempDB
     )
-import System.IO
-    ( BufferMode (..)
-    , hFlush
-    , hReady
-    , hSetBuffering
-    , hSetEcho
-    , stdin
-    , stdout
-    )
-import Text.Read (readMaybe)
-import Types
-    ( Block (..)
-    , Transfer (..)
-    )
+import Types (Block)
 
--- * Column GADT: backend + rollback
+-- * Helpers
 
--- | Full column set: backend columns + rollback storage.
-data AllCols c where
-    InBackend :: UnifiedCols c -> AllCols c
-    Rollbacks :: AllCols (KV Int (RollbackPoint ComposedInv ()))
+-- | Print a state snapshot in a compact format.
+printSnapshot :: String -> StateSnapshot -> IO ()
+printSnapshot label StateSnapshot{snapBalances, snapFlags, snapNotes} =
+    do
+        putStrLn $ "  [" ++ label ++ "]"
+        putStr "    balances:"
+        forM_ snapBalances $ \(name, mBal) ->
+            putStr $
+                " "
+                    ++ name
+                    ++ "="
+                    ++ maybe "0" show mBal
+        putStrLn ""
+        let activeFlags =
+                [(n, f) | (n, Just f) <- snapFlags]
+        when (not $ null activeFlags) $ do
+            putStr "    flags:   "
+            forM_ activeFlags $ \(n, f) ->
+                putStr $
+                    " " ++ n ++ "=\"" ++ f ++ "\""
+            putStrLn ""
+        let activeNotes =
+                [(n, v) | (n, Just v) <- snapNotes]
+        when (not $ null activeNotes) $ do
+            putStr "    notes:   "
+            forM_ activeNotes $ \(n, v) ->
+                putStr $
+                    " " ++ n ++ "=\"" ++ v ++ "\""
+            putStrLn ""
 
-instance GEq AllCols where
-    geq (InBackend a) (InBackend b) = geq a b
-    geq Rollbacks Rollbacks = Just Refl
-    geq _ _ = Nothing
-
-instance GCompare AllCols where
-    gcompare (InBackend a) (InBackend b) =
-        gcompare a b
-    gcompare (InBackend _) Rollbacks = GLT
-    gcompare Rollbacks (InBackend _) = GGT
-    gcompare Rollbacks Rollbacks = GEQ
-
--- * Block generation
-
-accounts :: [String]
-accounts =
-    ["alice", "bob", "carol", "dave", "eve"]
-
-mkBlock :: Int -> Block
-mkBlock slot =
-    Block
-        { blockSlot = slot
-        , blockTransfers = transfers
-        }
-  where
-    n = length accounts
-    sender = accounts !! (slot `mod` n)
-    receiver = accounts !! ((slot + 1) `mod` n)
-    amount
-        | slot `mod` 3 == 0 = 1500
-        | otherwise = 100 + slot * 10
-    transfers = [Transfer sender receiver amount]
-
--- * Database setup
-
-cfg :: Config
-cfg = def{createIfMissing = True}
-
-dbPath :: FilePath
-dbPath = "/tmp/chain-follower-tutorial-db"
-
--- * Display
-
-type RunTx =
-    forall a
-     . Transaction IO ColumnFamily AllCols BatchOp a
-    -> IO a
-
-printState :: RunTx -> IO ()
-printState runTx = do
-    balances <-
-        runTx $
-            mapM
-                ( \a -> do
-                    b <-
-                        mapColumns InBackend $
-                            mapColumns InBalance $
-                                query BalanceKV a
-                    pure (a, b)
-                )
-                accounts
-    flags <-
-        runTx $
-            mapM
-                ( \a -> do
-                    f <-
-                        mapColumns InBackend $
-                            mapColumns InAudit $
-                                query FlagKV a
-                    pure (a, f)
-                )
-                accounts
-    notes <-
-        runTx $
-            mapM
-                ( \a -> do
-                    n <-
-                        mapColumns InBackend $
-                            mapColumns InAudit $
-                                query NoteKV a
-                    pure (a, n)
-                )
-                accounts
-    putStr "  balances:"
-    forM_ balances $ \(name, mBal) ->
-        putStr $ " " ++ name ++ "=" ++ maybe "0" show mBal
+-- | Print a section header.
+section :: String -> IO ()
+section title = do
     putStrLn ""
-    let activeFlags = [(n, f) | (n, Just f) <- flags]
-    when (not $ null activeFlags) $ do
-        putStr "  flags:   "
-        forM_ activeFlags $ \(n, f) ->
-            putStr $ " " ++ n ++ "=\"" ++ f ++ "\""
-        putStrLn ""
-    let activeNotes = [(n, v) | (n, Just v) <- notes]
-    when (not $ null activeNotes) $ do
-        putStr "  notes:   "
-        forM_ activeNotes $ \(n, v) ->
-            putStr $ " " ++ n ++ "=\"" ++ v ++ "\""
-        putStrLn ""
-    hFlush stdout
+    putStrLn $ "  === " ++ title ++ " ==="
+    putStrLn ""
 
-describeBlock :: Block -> String
-describeBlock Block{blockTransfers} =
-    unlines $
-        map describeTransfer blockTransfers
-  where
-    describeTransfer Transfer{transferFrom, transferTo, transferAmount} =
-        "    "
-            ++ transferFrom
-            ++ " -> "
-            ++ transferTo
-            ++ " : "
-            ++ show transferAmount
-            ++ if transferAmount > 1000
-                then "  (large! will trigger audit)"
-                else ""
-
--- * Terminal helpers
-
-drainInput :: IO ()
-drainInput = do
-    ready <- hReady stdin
-    when ready $ do
-        void getChar
-        drainInput
+-- | The lifted backend Init over AllCols.
+backend
+    :: Init
+        IO
+        (Transaction IO ColumnFamily AllCols BatchOp)
+        Block
+        ComposedInv
+backend =
+    liftInit (mapColumns InBackend) composedInit
 
 -- * Main
 
 main :: IO ()
 main = do
-    hSetBuffering stdin NoBuffering
-    hSetEcho stdin False
-    withDBCF
-        dbPath
-        cfg
-        [ ("balances", cfg)
-        , ("flags", cfg)
-        , ("notes", cfg)
-        , ("rollbacks", cfg)
-        ]
-        $ \db -> do
-            let codecs =
-                    fromPairList
-                        [ InBackend (InBalance BalanceKV)
-                            :=> Codecs
-                                (prism' BS8.pack (Just . BS8.unpack))
-                                ( prism'
-                                    (BS8.pack . show)
-                                    (readMaybe . BS8.unpack)
-                                )
-                        , InBackend (InAudit FlagKV)
-                            :=> Codecs
-                                (prism' BS8.pack (Just . BS8.unpack))
-                                (prism' BS8.pack (Just . BS8.unpack))
-                        , InBackend (InAudit NoteKV)
-                            :=> Codecs
-                                (prism' BS8.pack (Just . BS8.unpack))
-                                (prism' BS8.pack (Just . BS8.unpack))
-                        , Rollbacks
-                            :=> Codecs
-                                ( prism'
-                                    (BS8.pack . show)
-                                    (readMaybe . BS8.unpack)
-                                )
-                                ( prism'
-                                    (BS8.pack . show)
-                                    (readMaybe . BS8.unpack)
-                                )
-                        ]
-                database =
-                    mkRocksDBDatabase db $
-                        mkColumns
-                            (columnFamilies db)
-                            codecs
+    putStrLn ""
+    putStrLn "  Chain Follower Lifecycle Tutorial"
+    putStrLn "  ================================="
+    putStrLn ""
+    putStrLn
+        "  This tutorial demonstrates the full"
+    putStrLn
+        "  lifecycle of a chain follower: restoration,"
+    putStrLn
+        "  following, rollback, and restart."
+
+    -- Phases 1-5 run in one temporary database.
+    stateAfterPhase5 <- withTempDB $ \runTx -> do
+        -- ── Phase 1: Fresh start ────────────────
+        section "Phase 1: Fresh Start (Restoration)"
+        putStrLn
+            "  No rollback tip — fresh database."
+        putStrLn
+            "  Call Init.startRestoring for bulk"
+        putStrLn
+            "  ingestion with no inverse tracking."
+
+        mTip <-
+            runTx $ Rollbacks.queryTip Rollbacks
+        putStrLn $
+            "  Rollback tip: " ++ show mTip
+
+        r <- startRestoring backend
+        let phase0 = InRestoration r
+
+        putStrLn ""
+        putStrLn
+            "  Restoring blocks 1..15 (no inverses):"
+        _ <-
+            foldPhase
                 runTx
-                    :: RunTx
-                runTx =
-                    runTransactionUnguarded database
+                phase0
+                [1 .. 15]
+                ( \slot ->
+                    when (slot `mod` 5 == 0) $ do
+                        snap <- snapshotState runTx
+                        printSnapshot
+                            ("after slot " ++ show slot)
+                            snap
+                )
 
-            -- Lift the backend Init into the full column type
-            let backend =
-                    liftInit
-                        (mapColumns InBackend)
-                        composedInit
+        -- ── Phase 2: Transition ─────────────────
+        section "Phase 2: Transition to Following"
+        putStrLn
+            "  Near the chain tip. Set up rollback"
+        putStrLn
+            "  sentinel and call Init.resumeFollowing."
+        putStrLn
+            "  Every block now stores inverses."
 
-            -- ── Introduction ─────────────────────────────
-            putStrLn ""
-            putStrLn "  Chain Follower Tutorial"
-            putStrLn "  ======================"
-            putStrLn ""
-            putStrLn "  You control a mock blockchain. The chain follower"
-            putStrLn "  uses the Runner to process blocks atomically"
-            putStrLn "  (backend mutations + rollback storage in one tx)."
-            putStrLn ""
-            putStrLn "  Controls:"
-            putStrLn "    [space/f]  produce next block (roll forward)"
-            putStrLn "    [t]        transition to following mode"
-            putStrLn "    [r]        fork! roll back 1 slot"
-            putStrLn "    [q]        quit (state persists for next run)"
-            putStrLn "    [d]        show how to delete DB for fresh start"
-            putStrLn ""
-            putStrLn $
-                "  DB path: " ++ dbPath
-            putStrLn
-                "  Quit and rerun to see Init resume from persisted state."
-            putStrLn ""
+        runTx $
+            Rollbacks.armageddonSetup
+                Rollbacks
+                15
+                Nothing
+        f <- resumeFollowing backend
+        let phase2start = InFollowing f
 
-            -- ── Initialization via Init ──────────────────
-            putStrLn "  Querying rollback tip..."
-            mTip <- runTx $ Rollbacks.queryTip Rollbacks
-            phase <- case mTip of
-                Nothing -> do
-                    putStrLn "  No rollback tip found — this is a fresh start."
-                    putStrLn ""
-                    putStrLn "  The chain follower has no checkpoint, so it calls"
-                    putStrLn "  Init.startRestoring to set up the backend for"
-                    putStrLn "  bulk ingestion (no inverses, no rollback support)."
-                    putStrLn ""
+        putStrLn ""
+        putStrLn
+            "  Following blocks 16..20 (with inverses):"
+        phase2 <-
+            foldPhase
+                runTx
+                phase2start
+                [16 .. 20]
+                ( \slot -> do
+                    snap <- snapshotState runTx
+                    printSnapshot
+                        ("after slot " ++ show slot)
+                        snap
+                )
+
+        -- ── Phase 3: Fork (rollback) ────────────
+        section "Phase 3: Simulate a Fork (Rollback)"
+        putStrLn
+            "  Chain source says: fork! Roll back to"
+        putStrLn
+            "  slot 18. Blocks 19-20 are undone by"
+        putStrLn
+            "  applying stored inverses in reverse."
+
+        following3 <- extractFollowing phase2
+        result <-
+            runTx $
+                rollbackTo Rollbacks following3 18
+        putStrLn $
+            "  rollbackTo 18 => " ++ show result
+
+        snap3 <- snapshotState runTx
+        printSnapshot "after rollback to 18" snap3
+
+        -- ── Phase 4: Follow the fork ────────────
+        section "Phase 4: Follow the Forked Chain"
+        putStrLn
+            "  New blocks 19'..22 on the forked chain."
+        putStrLn
+            "  (mkBlock is deterministic, so same content"
+        putStrLn
+            "  — in a real chain these would differ.)"
+
+        f4 <- resumeFollowing backend
+        phase4 <-
+            foldPhase
+                runTx
+                (InFollowing f4)
+                [19 .. 22]
+                ( \slot ->
+                    when (slot == 22) $ do
+                        snap <- snapshotState runTx
+                        printSnapshot
+                            ("after slot " ++ show slot)
+                            snap
+                )
+
+        _ <- extractFollowing phase4
+
+        -- ── Phase 5: Small-gap restart ──────────
+        section "Phase 5: Offline Restart (Small Gap)"
+        putStrLn
+            "  You were at slot 22. Blockchain is now"
+        putStrLn
+            "  at slot 25. Gap=3 <= rollbackWindow=5."
+        putStrLn
+            "  Stay in FOLLOWING mode, catch up."
+
+        f5 <- resumeFollowing backend
+        phase5 <-
+            foldPhase
+                runTx
+                (InFollowing f5)
+                [23 .. 25]
+                ( \slot ->
+                    when (slot == 25) $ do
+                        snap <- snapshotState runTx
+                        printSnapshot
+                            ("after slot " ++ show slot)
+                            snap
+                )
+
+        _ <- extractFollowing phase5
+        snapshotState runTx
+
+    -- ── Phase 6: Large-gap restart ──────────────
+    -- This runs in a FRESH database, simulating a
+    -- full armageddon wipe + re-restore.
+    finalState <- withTempDB $ \runTx -> do
+        section "Phase 6: Offline Restart (Large Gap)"
+        putStrLn
+            "  You were at slot 25. Blockchain is now"
+        putStrLn
+            "  at slot 40. Gap=15 > rollbackWindow=5."
+        putStrLn
+            "  Rollback history is insufficient."
+        putStrLn
+            "  Need armageddon: wipe everything and"
+        putStrLn
+            "  re-restore the full canonical chain."
+
+        putStrLn ""
+        putStrLn "  Running armageddonCleanup loop..."
+        let cleanupLoop = do
+                more <-
                     runTx $
-                        Rollbacks.armageddonSetup Rollbacks 0 Nothing
-                    r <- startRestoring backend
-                    putStrLn "  Phase: RESTORATION"
-                    putStrLn "  Press f to ingest blocks, t to transition to following."
-                    putStrLn ""
-                    pure (InRestoration r)
-                Just tip -> do
-                    putStrLn $
-                        "  Rollback tip found at slot "
-                            ++ show tip
-                            ++ " — resuming!"
-                    putStrLn ""
-                    putStrLn "  The chain follower found a checkpoint, so it calls"
-                    putStrLn "  Init.resumeFollowing to restore the backend for"
-                    putStrLn "  near-tip operation with full rollback support."
-                    putStrLn ""
-                    f <- resumeFollowing backend
-                    putStrLn "  Phase: FOLLOWING"
-                    putStrLn "  Press f to follow blocks, r to simulate a fork."
-                    putStrLn ""
-                    pure (InFollowing f)
+                        Rollbacks.armageddonCleanup
+                            Rollbacks
+                            100
+                when more cleanupLoop
+        cleanupLoop
+        putStrLn "  Cleanup complete."
 
-            printState runTx
-            putStrLn ""
+        putStrLn
+            "  Running armageddonSetup at slot 0..."
+        runTx $
+            Rollbacks.armageddonSetup
+                Rollbacks
+                0
+                Nothing
 
-            -- ── Interactive loop ─────────────────────────
-            phaseRef <- newIORef phase
-            slotRef <- case mTip of
-                Nothing -> newIORef (1 :: Int)
-                Just tip -> newIORef (tip + 1)
-
-            let loop = do
-                    drainInput
-                    p <- readIORef phaseRef
-                    slot <- readIORef slotRef
-                    let (phaseLabel, hint) = case p of
-                            InRestoration _ ->
-                                ("RESTORE", "f:forward t:transition q:quit")
-                            InFollowing _ ->
-                                ("FOLLOW", "f:forward r:rollback q:quit")
-                    putStr $
-                        "  ["
-                            ++ phaseLabel
-                            ++ " slot:"
-                            ++ show (slot - 1)
-                            ++ "] ("
-                            ++ hint
-                            ++ ") > "
-                    hFlush stdout
-                    c <- getChar
-                    putStrLn ""
-                    case c of
-                        'q' -> do
-                            putStrLn "  Quit. State persisted to RocksDB."
-                            putStrLn ""
-                            putStrLn "  Run again — Init will find the rollback tip"
-                            putStrLn $
-                                "  at slot "
-                                    ++ show (slot - 1)
-                                    ++ " and resume in FOLLOWING mode."
-                            putStrLn ""
-                            putStrLn $
-                                "  To start fresh: rm -rf " ++ dbPath
-                        'Q' -> do
-                            putStrLn "  Quit. State persisted."
-                        'd' -> do
-                            putStrLn "  Deleting database..."
-                            -- Can't delete while open, just inform
-                            putStrLn $
-                                "  Run: rm -rf " ++ dbPath
-                        'r' -> do
-                            case p of
-                                InRestoration _ -> do
-                                    putStrLn
-                                        "  Cannot rollback in restoration mode."
-                                    putStrLn
-                                        "  (No inverses stored yet.)"
-                                    putStrLn ""
-                                    loop
-                                InFollowing f -> do
-                                    let target = slot - 2
-                                    if target < 0
-                                        then do
-                                            putStrLn
-                                                "  Nothing to roll back."
-                                            putStrLn ""
-                                            loop
-                                        else do
-                                            putStrLn $
-                                                "  ROLLBACK to slot "
-                                                    ++ show target
-                                            result <-
-                                                runTx $
-                                                    rollbackTo
-                                                        Rollbacks
-                                                        f
-                                                        target
-                                            putStrLn $
-                                                "  Result: "
-                                                    ++ show result
-                                            writeIORef
-                                                slotRef
-                                                (target + 1)
-                                            putStrLn ""
-                                            printState runTx
-                                            putStrLn ""
-                                            loop
-                        't' -> do
-                            -- Transition to following
-                            case p of
-                                InRestoration _ -> do
-                                    putStrLn
-                                        "  Transitioning to FOLLOWING mode."
-                                    putStrLn
-                                        "  From now on, inverses are stored"
-                                    putStrLn
-                                        "  for rollback support."
-                                    putStrLn ""
-                                    -- Set up rollback sentinel at current position
-                                    let sentinel = slot - 1
-                                    runTx $
-                                        Rollbacks.armageddonSetup
-                                            Rollbacks
-                                            sentinel
-                                            Nothing
-                                    f <- resumeFollowing backend
-                                    writeIORef phaseRef (InFollowing f)
-                                    loop
-                                InFollowing _ -> do
-                                    putStrLn
-                                        "  Already in FOLLOWING mode."
-                                    putStrLn ""
-                                    loop
-                        _ -> do
-                            -- Forward: produce next block
-                            let block = mkBlock slot
-                            putStrLn $
-                                "  [forward] slot "
+        putStrLn ""
+        putStrLn "  Re-restoring canonical chain 1..35:"
+        r6 <- startRestoring backend
+        _ <-
+            foldPhase
+                runTx
+                (InRestoration r6)
+                [1 .. 35]
+                ( \slot ->
+                    when
+                        ( slot `mod` 10 == 0
+                            || slot == 35
+                        )
+                        $ do
+                            snap <- snapshotState runTx
+                            printSnapshot
+                                ( "after slot "
                                     ++ show slot
-                            putStr $ describeBlock block
-                            p' <-
-                                runTx $
-                                    processBlock
-                                        Rollbacks
-                                        slot
-                                        block
-                                        p
-                            writeIORef phaseRef p'
-                            writeIORef slotRef (slot + 1)
-                            putStrLn ""
-                            printState runTx
-                            putStrLn ""
-                            loop
-            loop
+                                )
+                                snap
+                )
+
+        putStrLn ""
+        putStrLn
+            "  Transition to following at slot 35..."
+        runTx $
+            Rollbacks.armageddonSetup
+                Rollbacks
+                35
+                Nothing
+        f6 <- resumeFollowing backend
+
+        putStrLn "  Following blocks 36..40:"
+        phase6final <-
+            foldPhase
+                runTx
+                (InFollowing f6)
+                [36 .. 40]
+                ( \slot ->
+                    when (slot == 40) $ do
+                        snap <- snapshotState runTx
+                        printSnapshot
+                            ("after slot " ++ show slot)
+                            snap
+                )
+
+        _ <- extractFollowing phase6final
+        snapshotState runTx
+
+    -- ── Phase 7: Verification ───────────────────
+    section "Phase 7: Verification"
+    putStrLn
+        "  Verify: the final state after armageddon"
+    putStrLn
+        "  + re-restore equals a clean single-pass"
+    putStrLn
+        "  of the canonical chain."
+
+    let canonicalEvents =
+            map (Forward . mkBlock) [1 .. 18]
+                ++ [RollBack 18]
+                ++ map (Forward . mkBlock) [19 .. 40]
+        canonicalBlocks =
+            resolveCanonical canonicalEvents
+
+    putStrLn $
+        "  Canonical chain length: "
+            ++ show (length canonicalBlocks)
+
+    -- Single-pass in a fresh temp DB
+    singlePassState <- withTempDB $ \runTx2 -> do
+        r' <- startRestoring backend
+        _ <-
+            foldPhaseSimple runTx2 (InRestoration r') $
+                zip [1 ..] canonicalBlocks
+        snapshotState runTx2
+
+    putStrLn ""
+    if finalState == singlePassState
+        then
+            putStrLn
+                "  PASS: states match."
+        else do
+            putStrLn
+                "  MISMATCH: states differ!"
+            printSnapshot "lifecycle" finalState
+            printSnapshot
+                "single-pass"
+                singlePassState
+
+    -- Also verify phase 5 state is consistent
+    -- with canonical chain up to slot 25
+    let canonical25 =
+            resolveCanonical $
+                map (Forward . mkBlock) [1 .. 18]
+                    ++ [RollBack 18]
+                    ++ map (Forward . mkBlock) [19 .. 25]
+    singlePass25 <- withTempDB $ \runTx3 -> do
+        r'' <- startRestoring backend
+        _ <-
+            foldPhaseSimple
+                runTx3
+                (InRestoration r'')
+                $ zip [1 ..] canonical25
+        snapshotState runTx3
+
+    if stateAfterPhase5 == singlePass25
+        then
+            putStrLn
+                "  PASS: phase 5 state matches canonical."
+        else do
+            putStrLn
+                "  MISMATCH: phase 5 differs!"
+            printSnapshot "phase5" stateAfterPhase5
+            printSnapshot "canonical25" singlePass25
+
+    putStrLn ""
+    putStrLn "  Tutorial complete."
+    putStrLn ""
+
+-- * Phase type aliases
+
+-- | Concrete phase for the tutorial.
+type TutPhase =
+    Phase
+        IO
+        ColumnFamily
+        AllCols
+        BatchOp
+        Block
+        ComposedInv
+
+-- | Concrete following for the tutorial.
+type TutFollowing =
+    Following
+        IO
+        ( Transaction
+            IO
+            ColumnFamily
+            AllCols
+            BatchOp
+        )
+        Block
+        ComposedInv
+
+-- * Phase fold helpers
+
+{- | Process a sequence of slots, calling an
+action after each.
+-}
+foldPhase
+    :: RunTx
+    -> TutPhase
+    -> [Int]
+    -> (Int -> IO ())
+    -> IO TutPhase
+foldPhase runTx = go
+  where
+    go phase [] _ = pure phase
+    go phase (slot : rest) after = do
+        phase' <-
+            runTx $
+                processBlock
+                    Rollbacks
+                    slot
+                    (mkBlock slot)
+                    phase
+        after slot
+        go phase' rest after
+
+{- | Process blocks without per-slot actions
+(for verification).
+-}
+foldPhaseSimple
+    :: RunTx
+    -> TutPhase
+    -> [(Int, Block)]
+    -> IO TutPhase
+foldPhaseSimple _ phase [] = pure phase
+foldPhaseSimple runTx phase ((slot, block) : rest) =
+    do
+        phase' <-
+            runTx $
+                processBlock Rollbacks slot block phase
+        foldPhaseSimple runTx phase' rest
+
+-- | Extract Following from a phase, or error.
+extractFollowing :: TutPhase -> IO TutFollowing
+extractFollowing (InFollowing f) = pure f
+extractFollowing (InRestoration _) =
+    error "extractFollowing: still in restoration"
