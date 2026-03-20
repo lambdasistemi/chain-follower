@@ -44,6 +44,7 @@ backend
         )
         Block
         ComposedInv
+        Int
 backend = liftInit (mapColumns InBackend) composedInit
 
 spec :: Spec

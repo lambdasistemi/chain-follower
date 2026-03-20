@@ -8,6 +8,9 @@ module ChainFollower.Laws
       -- * Main theorem (from dfs_equiv_canonical)
     , prop_dfsEquivCanonical
 
+      -- * Metadata history correctness
+    , prop_historyMatchesMetadata
+
       -- * Test harness
     , BackendHarness (..)
     , runDfsWalk
@@ -98,7 +101,7 @@ Parameterized over:
 * @inv@ — inverse type
 * @snapshot@ — state snapshot type (must be Eq, Show)
 -}
-data BackendHarness m cf col op slot block inv snapshot
+data BackendHarness m cf col op slot block inv meta snapshot
     = BackendHarness
     { bhInit
         :: Init
@@ -111,6 +114,7 @@ data BackendHarness m cf col op slot block inv snapshot
             )
             block
             inv
+            meta
     {- ^ The backend's Init, already lifted into
     the full column type.
     -}
@@ -134,7 +138,7 @@ data BackendHarness m cf col op slot block inv snapshot
     transaction runner.
     -}
     , bhRollbackCol
-        :: RollbackCol col slot inv ()
+        :: RollbackCol col slot inv meta
     -- ^ The rollback column selector.
     , bhStabilityWindow :: Int
     -- ^ Maximum depth of non-canonical branches.
@@ -166,7 +170,7 @@ prop_backendIsSwap
        , Eq snapshot
        , Show snapshot
        )
-    => BackendHarness m cf col op slot block inv snapshot
+    => BackendHarness m cf col op slot block inv meta snapshot
     -> [(slot, block)]
     -- ^ Seed blocks to build up state.
     -> (slot, block)
@@ -199,7 +203,7 @@ prop_backendIsSwap h seed (slot, block) =
         -- Follow one block
         case phase of
             InFollowing f -> do
-                (inv, f') <-
+                (inv, meta, f') <-
                     runTx $ follow f block
                 -- Store the rollback point
                 runTx $
@@ -208,7 +212,7 @@ prop_backendIsSwap h seed (slot, block) =
                         slot
                         RollbackPoint
                             { rpInverses = [inv]
-                            , rpMeta = Nothing
+                            , rpMeta = meta
                             }
                 -- Apply inverse
                 runTx $ applyInverse f' inv
@@ -249,7 +253,7 @@ Tests:
 -}
 prop_treeWellFormed
     :: (Ord slot)
-    => BackendHarness m cf col op slot block inv snapshot
+    => BackendHarness m cf col op slot block inv meta snapshot
     -> BlockTree slot block
     -> Maybe String
 prop_treeWellFormed h tree =
@@ -292,7 +296,7 @@ prop_dfsEquivCanonical
        , Eq snapshot
        , Show snapshot
        )
-    => BackendHarness m cf col op slot block inv snapshot
+    => BackendHarness m cf col op slot block inv meta snapshot
     -> BlockTree slot block
     -> m (Maybe String)
 prop_dfsEquivCanonical h tree = do
@@ -314,7 +318,7 @@ mode. Used by 'prop_dfsEquivCanonical'.
 -}
 runDfsWalk
     :: (MonadIO m, Ord slot, GCompare col)
-    => BackendHarness m cf col op slot block inv snapshot
+    => BackendHarness m cf col op slot block inv meta snapshot
     -> [ChainEvent slot block]
     -> m snapshot
 runDfsWalk h events =
@@ -359,7 +363,7 @@ Used by 'prop_dfsEquivCanonical'.
 -}
 runCanonical
     :: (MonadIO m, Ord slot, GCompare col)
-    => BackendHarness m cf col op slot block inv snapshot
+    => BackendHarness m cf col op slot block inv meta snapshot
     -> [(slot, block)]
     -> m snapshot
 runCanonical h blocks =
@@ -382,3 +386,111 @@ runCanonical h blocks =
             (InRestoration restoring)
             blocks
         bhSnapshot h runTx
+
+{- | __Metadata history correctness__
+
+After processing a DFS walk (with forks and rollbacks),
+'queryHistory' returns exactly the metadata for the
+canonical chain. Rolled-back entries are deleted; only
+the surviving points remain with the correct metadata
+produced by 'follow'.
+
+This verifies that:
+
+1. 'processBlock' stores the metadata from 'follow'
+2. 'rollbackTo' deletes rolled-back entries
+3. The surviving history matches the canonical path
+
+Requires a function to extract expected metadata from
+a block (e.g. total transfer amount).
+-}
+prop_historyMatchesMetadata
+    :: ( MonadIO m
+       , Ord slot
+       , GCompare col
+       , Eq meta
+       , Show meta
+       , Show slot
+       )
+    => BackendHarness
+        m
+        cf
+        col
+        op
+        slot
+        block
+        inv
+        meta
+        snapshot
+    -> (block -> Maybe meta)
+    -- ^ Expected metadata for a block.
+    -> [ChainEvent slot block]
+    -- ^ DFS walk to process.
+    -> [(slot, block)]
+    {- ^ Canonical chain (from 'canonicalPath' or
+    'resolveCanonical').
+    -}
+    -> m (Maybe String)
+prop_historyMatchesMetadata h blockMeta events canon =
+    bhWithFreshDB h $ \runTx -> do
+        -- Process the DFS walk
+        runTx $
+            Rollbacks.armageddonSetup
+                (bhRollbackCol h)
+                (bhSentinel h)
+                Nothing
+        following <- resumeFollowing (bhInit h)
+        phaseRef <- liftIO $ newIORef (InFollowing following)
+        let processEvent (Forward slot block) = do
+                phase <- liftIO $ readIORef phaseRef
+                phase' <-
+                    runTx $
+                        processBlock
+                            (bhRollbackCol h)
+                            slot
+                            block
+                            phase
+                liftIO $ writeIORef phaseRef phase'
+            processEvent (RollBack target) = do
+                phase <- liftIO $ readIORef phaseRef
+                case phase of
+                    InFollowing f -> do
+                        _ <-
+                            runTx $
+                                rollbackTo
+                                    (bhRollbackCol h)
+                                    f
+                                    target
+                        pure ()
+                    InRestoration _ ->
+                        error
+                            "prop_historyMatchesMetadata:\
+                            \ rollback in restoration"
+        mapM_ processEvent events
+        -- Query history
+        history <-
+            runTx $
+                Rollbacks.queryHistory
+                    (bhRollbackCol h)
+        -- Drop the sentinel (first entry with no meta)
+        let actual =
+                [ (slot, meta)
+                | (slot, rp) <- history
+                , slot /= bhSentinel h
+                , meta <- maybe [] pure (rpMeta rp)
+                ]
+            expected =
+                [ (slot, meta)
+                | (slot, block) <- canon
+                , meta <- maybe [] pure (blockMeta block)
+                ]
+        if actual == expected
+            then pure Nothing
+            else
+                pure $
+                    Just $
+                        "history metadata mismatch:"
+                            ++ "\n  actual:   "
+                            ++ show actual
+                            ++ "\n  expected: "
+                            ++ show expected

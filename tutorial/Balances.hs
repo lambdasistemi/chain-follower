@@ -128,6 +128,7 @@ mkBalancesRestoring
         (Transaction IO cf BalanceCols op)
         Block
         [BalanceInv]
+        ()
 mkBalancesRestoring =
     Restoring
         { restore = \block -> do
@@ -144,11 +145,12 @@ mkBalancesFollowing
         (Transaction IO cf BalanceCols op)
         Block
         [BalanceInv]
+        ()
 mkBalancesFollowing =
     Following
         { follow = \block -> do
             invs <- mapM applyWithInverse (extractOps block)
-            pure (invs, mkBalancesFollowing)
+            pure (invs, Nothing, mkBalancesFollowing)
         , toRestoring =
             pure mkBalancesRestoring
         , applyInverse =

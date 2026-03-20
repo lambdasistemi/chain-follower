@@ -50,15 +50,15 @@ type T m cf col op =
     Transaction m cf col op
 
 -- | Current phase of the chain follower.
-data Phase m cf col op block inv
+data Phase m cf col op block inv meta
     = {- | Restoration: bulk ingestion, no rollback
       support.
       -}
       InRestoration
-        (Restoring m (T m cf col op) block inv)
+        (Restoring m (T m cf col op) block inv meta)
     | -- | Following: near tip, rollback support active.
       InFollowing
-        (Following m (T m cf col op) block inv)
+        (Following m (T m cf col op) block inv meta)
 
 {- | Process a block in the current phase.
 
@@ -71,32 +71,32 @@ Returns the updated phase continuation.
 -}
 processBlock
     :: (Ord slot, GCompare col, Monad m)
-    => RollbackCol col slot inv ()
+    => RollbackCol col slot inv meta
     -- ^ Rollback column selector
     -> slot
     -- ^ Current slot
     -> block
     -- ^ Block to process
-    -> Phase m cf col op block inv
+    -> Phase m cf col op block inv meta
     -- ^ Current phase
     -> T
         m
         cf
         col
         op
-        (Phase m cf col op block inv)
+        (Phase m cf col op block inv meta)
 processBlock _ _ block (InRestoration restoring) = do
     next <- restore restoring block
     pure $ InRestoration next
 processBlock rollbackCol slot block (InFollowing following) =
     do
-        (inv, next) <- follow following block
+        (inv, meta, next) <- follow following block
         Rollbacks.storeRollbackPoint
             rollbackCol
             slot
             RollbackPoint
                 { rpInverses = [inv]
-                , rpMeta = Nothing
+                , rpMeta = meta
                 }
         pure $ InFollowing next
 
@@ -111,9 +111,9 @@ support.
 -}
 rollbackTo
     :: (Ord slot, Monad m, GCompare col)
-    => RollbackCol col slot inv ()
+    => RollbackCol col slot inv meta
     -- ^ Rollback column selector
-    -> Following m (T m cf col op) block inv
+    -> Following m (T m cf col op) block inv meta
     -- ^ Current following continuation
     -> slot
     -- ^ Target slot to roll back to
@@ -132,7 +132,7 @@ finality slot can never be rolled back to.
 -}
 pruneOldPoints
     :: (Ord slot, Monad m, GCompare col)
-    => RollbackCol col slot inv ()
+    => RollbackCol col slot inv meta
     -- ^ Rollback column selector
     -> slot
     -- ^ Finality slot (prune strictly below)

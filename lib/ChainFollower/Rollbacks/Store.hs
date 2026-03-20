@@ -36,6 +36,9 @@ module ChainFollower.Rollbacks.Store
 
       -- * Inspection
     , countPoints
+
+      -- * History query
+    , queryHistory
     )
 where
 
@@ -242,3 +245,29 @@ countPoints col =
             Just _ -> do
                 next <- nextEntry
                 (+ 1) <$> go next
+
+{- | Query the full history of rollback points.
+
+Returns all @(key, RollbackPoint)@ pairs in order
+from oldest to newest. Useful for querying
+per-point metadata (e.g. merkle roots).
+-}
+queryHistory
+    :: (Monad m, GCompare t)
+    => RollbackCol t key inv meta
+    -- ^ Column selector
+    -> Transaction
+        m
+        cf
+        t
+        op
+        [(key, RollbackPoint inv meta)]
+queryHistory col =
+    iterating col $ do
+        me <- firstEntry
+        ($ me) $ fix $ \go -> \case
+            Nothing -> pure []
+            Just Entry{entryKey, entryValue} -> do
+                rest <- nextEntry >>= go
+                pure $
+                    (entryKey, entryValue) : rest
