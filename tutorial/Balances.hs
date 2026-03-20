@@ -10,28 +10,28 @@ module Balances
     , extractOps
     ) where
 
-{- |
-Module      : Balances
-Description : Balance backend — CSMT-like pattern
-Copyright   : (c) Paolo Veronelli, 2026
-License     : Apache-2.0
-
-A simplified balance tracker that mimics the CSMT UTxO
-follower pattern:
-
-* __Pure extraction__: @block → [BalanceOp]@ without
-  reading the database
-* __Simple KV inverse__: stores the old balance value
-  before mutation
-* __Restoration__: applies ops without computing inverses
-* __Following__: applies ops and computes inverses for
-  each mutation
--}
+-- \|
+-- Module      : Balances
+-- Description : Balance backend — CSMT-like pattern
+-- Copyright   : (c) Paolo Veronelli, 2026
+-- License     : Apache-2.0
+--
+-- A simplified balance tracker that mimics the CSMT UTxO
+-- follower pattern:
+--
+-- \* __Pure extraction__: @block → [BalanceOp]@ without
+--   reading the database
+-- \* __Simple KV inverse__: stores the old balance value
+--   before mutation
+-- \* __Restoration__: applies ops without computing inverses
+-- \* __Following__: applies ops and computes inverses for
+--   each mutation
 
 import ChainFollower.Backend
     ( Following (..)
     , Restoring (..)
     )
+import Data.Type.Equality ((:~:) (..))
 import Database.KV.Transaction
     ( GCompare (..)
     , GEq (..)
@@ -42,7 +42,6 @@ import Database.KV.Transaction
     , insert
     , query
     )
-import Data.Type.Equality ((:~:) (..))
 import Types
     ( BalanceInv (..)
     , BalanceOp (..)
@@ -61,10 +60,11 @@ instance GEq BalanceCols where
 instance GCompare BalanceCols where
     gcompare BalanceKV BalanceKV = GEQ
 
--- | Purely extract balance operations from a block.
---
--- Like CSMT's @uTxOsWithTxCount@: no database access
--- needed, the block contains all information.
+{- | Purely extract balance operations from a block.
+
+Like CSMT's @uTxOsWithTxCount@: no database access
+needed, the block contains all information.
+-}
 extractOps :: Block -> [BalanceOp]
 extractOps Block{blockTransfers} =
     concatMap transferToOps blockTransfers
@@ -74,8 +74,9 @@ extractOps Block{blockTransfers} =
         , Credit transferTo transferAmount
         ]
 
--- | Apply a single balance op in a transaction,
--- returning the inverse.
+{- | Apply a single balance op in a transaction,
+returning the inverse.
+-}
 applyWithInverse
     :: BalanceOp
     -> Transaction IO cf BalanceCols op BalanceInv
@@ -151,5 +152,5 @@ mkBalancesFollowing =
         , toRestoring =
             pure mkBalancesRestoring
         , applyInverse =
-            mapM_ undoInverse
+            mapM_ undoInverse . reverse
         }

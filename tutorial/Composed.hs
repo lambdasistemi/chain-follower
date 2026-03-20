@@ -10,27 +10,26 @@ module Composed
     , ComposedInv (..)
     ) where
 
-{- |
-Module      : Composed
-Description : Fan-out composition of Balances and Audit
-Copyright   : (c) Paolo Veronelli, 2026
-License     : Apache-2.0
-
-Demonstrates composing two backends (Balances and Audit)
-into a single chain follower, mimicking the MPFS pattern
-where the cage follower and UTxO CSMT share one
-transaction via @UnifiedColumns@.
-
-The key insight: individual backends define their column
-GADTs and operations, but the __composed__ backend
-constructs @Restoring@\/@Following@ directly over the
-@UnifiedCols@ GADT, using @mapColumns@ to route each
-operation to the right column family.
-
-This matches the real MPFS pattern where @CageFollower@
-calls @mapColumns InUtxo@ and @mapColumns InCage@ at
-each operation site, not at the continuation level.
--}
+-- \|
+-- Module      : Composed
+-- Description : Fan-out composition of Balances and Audit
+-- Copyright   : (c) Paolo Veronelli, 2026
+-- License     : Apache-2.0
+--
+-- Demonstrates composing two backends (Balances and Audit)
+-- into a single chain follower, mimicking the MPFS pattern
+-- where the cage follower and UTxO CSMT share one
+-- transaction via @UnifiedColumns@.
+--
+-- The key insight: individual backends define their column
+-- GADTs and operations, but the __composed__ backend
+-- constructs @Restoring@\/@Following@ directly over the
+-- @UnifiedCols@ GADT, using @mapColumns@ to route each
+-- operation to the right column family.
+--
+-- This matches the real MPFS pattern where @CageFollower@
+-- calls @mapColumns InUtxo@ and @mapColumns InCage@ at
+-- each operation site, not at the continuation level.
 
 import Audit
     ( AuditCols (..)
@@ -154,6 +153,11 @@ auditQueryFlag
 auditQueryFlag =
     mapColumns InAudit . query FlagKV
 
+auditQueryNote
+    :: String -> T cf op (Maybe String)
+auditQueryNote =
+    mapColumns InAudit . query NoteKV
+
 auditInsertFlag
     :: String -> String -> T cf op ()
 auditInsertFlag k v =
@@ -208,8 +212,11 @@ applyAuditEvent (FlagAccount account reason) = do
         Nothing -> RemoveFlag account
         Just old -> RestoreFlag account old
 applyAuditEvent (AddNote account note) = do
+    oldNote <- auditQueryNote account
     auditInsertNote account note
-    pure $ RemoveNote account note
+    pure $ case oldNote of
+        Nothing -> RemoveNote account
+        Just old -> RestoreNote account old
 
 applyAuditEventFast
     :: AuditEvent -> T cf op ()
@@ -223,8 +230,10 @@ undoAuditInv (RemoveFlag account) =
     auditDeleteFlag account
 undoAuditInv (RestoreFlag account old) =
     auditInsertFlag account old
-undoAuditInv (RemoveNote account _note) =
+undoAuditInv (RemoveNote account) =
     auditDeleteNote account
+undoAuditInv (RestoreNote account old) =
+    auditInsertNote account old
 
 -- * Composed continuations
 
@@ -273,6 +282,9 @@ composedFollowing =
         , applyInverse =
             \ComposedInv{balanceInvs, auditInvs} ->
                 do
-                    mapM_ undoBalanceInv balanceInvs
-                    mapM_ undoAuditInv auditInvs
+                    -- Undo in reverse: audit was applied after
+                    -- balances, so undo audit first. Within each
+                    -- list, reverse to undo last-applied first.
+                    mapM_ undoAuditInv (reverse auditInvs)
+                    mapM_ undoBalanceInv (reverse balanceInvs)
         }

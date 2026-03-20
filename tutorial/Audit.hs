@@ -10,29 +10,29 @@ module Audit
     , threshold
     ) where
 
-{- |
-Module      : Audit
-Description : Audit backend — Cage-like pattern
-Copyright   : (c) Paolo Veronelli, 2026
-License     : Apache-2.0
-
-A simplified audit trail that mimics the Cage follower
-pattern:
-
-* __Impure detection__: needs to read the database to
-  determine if a transfer involves a flagged account
-  (like the cage follower resolves spent UTxOs)
-* __Domain-specific inverse__: semantic undo operations
-  ('RestoreFlag', 'RemoveFlag', 'RemoveNote'),
-  not generic Insert\/Delete
-* __Threshold-based__: flags accounts with transfers
-  above a threshold
--}
+-- \|
+-- Module      : Audit
+-- Description : Audit backend — Cage-like pattern
+-- Copyright   : (c) Paolo Veronelli, 2026
+-- License     : Apache-2.0
+--
+-- A simplified audit trail that mimics the Cage follower
+-- pattern:
+--
+-- \* __Impure detection__: needs to read the database to
+--   determine if a transfer involves a flagged account
+--   (like the cage follower resolves spent UTxOs)
+-- \* __Domain-specific inverse__: semantic undo operations
+--   ('RestoreFlag', 'RemoveFlag', 'RemoveNote'),
+--   not generic Insert\/Delete
+-- \* __Threshold-based__: flags accounts with transfers
+--   above a threshold
 
 import ChainFollower.Backend
     ( Following (..)
     , Restoring (..)
     )
+import Data.Type.Equality ((:~:) (..))
 import Database.KV.Transaction
     ( GCompare (..)
     , GEq (..)
@@ -43,7 +43,6 @@ import Database.KV.Transaction
     , insert
     , query
     )
-import Data.Type.Equality ((:~:) (..))
 import Types
     ( AuditEvent (..)
     , AuditInv (..)
@@ -110,11 +109,12 @@ detectEvents Block{blockTransfers} =
                         ]
                     | otherwise -> []
 
--- | Compute inverse before applying an event.
---
--- Like the cage follower's @computeInverse@: read
--- current state to build the semantic inverse, then
--- apply the mutation.
+{- | Compute inverse before applying an event.
+
+Like the cage follower's @computeInverse@: read
+current state to build the semantic inverse, then
+apply the mutation.
+-}
 applyWithInverse
     :: AuditEvent
     -> Transaction IO cf AuditCols op AuditInv
@@ -126,8 +126,11 @@ applyWithInverse (FlagAccount account reason) = do
         Just oldReason ->
             RestoreFlag account oldReason
 applyWithInverse (AddNote account note) = do
+    oldNote <- query NoteKV account
     insert NoteKV account note
-    pure $ RemoveNote account note
+    pure $ case oldNote of
+        Nothing -> RemoveNote account
+        Just old -> RestoreNote account old
 
 -- | Apply fast without inverse (restoration mode).
 applyFast
@@ -146,8 +149,10 @@ undoInverse (RemoveFlag account) =
     delete FlagKV account
 undoInverse (RestoreFlag account oldReason) =
     insert FlagKV account oldReason
-undoInverse (RemoveNote account _note) =
+undoInverse (RemoveNote account) =
     delete NoteKV account
+undoInverse (RestoreNote account old) =
+    insert NoteKV account old
 
 -- | Create a restoring continuation for audit.
 mkAuditRestoring
@@ -182,5 +187,5 @@ mkAuditFollowing =
         , toRestoring =
             pure mkAuditRestoring
         , applyInverse =
-            mapM_ undoInverse
+            mapM_ undoInverse . reverse
         }
