@@ -33,7 +33,7 @@
                 fourmolu = indexTool;
                 hlint = indexTool;
               };
-              buildInputs = [ pkgs.just pkgs.nixfmt-classic ];
+              buildInputs = [ pkgs.just pkgs.nixfmt-classic pkgs.elan ];
             };
           };
         in {
