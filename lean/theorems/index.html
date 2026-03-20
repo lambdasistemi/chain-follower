@@ -1,0 +1,1636 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://lambdasistemi.github.io/chain-follower/lean/theorems/">
+      
+      
+        <link rel="prev" href="../overview/">
+      
+      
+        <link rel="next" href="../../testing/laws/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.0">
+    
+    
+      
+        <title>Theorems - Chain Follower</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.618322db.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#theorems-reference" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Chain Follower" class="md-header__button md-logo" aria-label="Chain Follower" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Chain Follower
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Theorems
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/lambdasistemi/chain-follower" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Chain Follower" class="md-nav__button md-logo" aria-label="Chain Follower" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Chain Follower
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/lambdasistemi/chain-follower" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/block-tree/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Block Tree Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/swap-partition/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Swap Partition
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/phases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phases
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/modules/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Module Map
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/runner/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runner
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/rollback-store/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rollback Store
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/backend/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backend Interface
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/mock-chain/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mock Chain
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Lean Formalization
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Lean Formalization
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Theorems
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Theorems
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#swappartitionlean" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SwapPartition.lean
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="SwapPartition.lean">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#applyswaps_append_fst" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        applySwaps_append_fst
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rollbacklean" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rollback.lean
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Rollback.lean">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#swap_inverse_restores" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        swap_inverse_restores
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#swap_inverse_binding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        swap_inverse_binding
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#single_step_rollback" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        single_step_rollback
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rollback_restores" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        rollback_restores
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#state_total" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        state_total
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#swap_preserves_totality" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        swap_preserves_totality
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#swap_commute" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        swap_commute
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#blocktreelean" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BlockTree.lean
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="BlockTree.lean">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#listsizeof_last_le" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        List.sizeOf_last'_le
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gofull_dfssubtree" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        goFull_dfsSubtree
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dfs_equiv_canonical" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        dfs_equiv_canonical
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Testing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../testing/laws/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Laws
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../testing/properties/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Properties
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorial
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorial
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorial/running/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Running
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorial/walkthrough/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Walkthrough
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="Navigation" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    Home
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../overview/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Lean Formalization
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="theorems-reference">Theorems Reference</h1>
+<p>Exhaustive listing of all theorems in the Lean formalization.</p>
+<h2 id="summary">Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Theorem</th>
+<th>File</th>
+<th>Property</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>applySwaps_append_fst</code></td>
+<td>SwapPartition</td>
+<td><code>applySwaps</code> distributes over list concatenation</td>
+</tr>
+<tr>
+<td><code>swap_inverse_restores</code></td>
+<td>Rollback</td>
+<td>swap then swap-back = identity (pointwise)</td>
+</tr>
+<tr>
+<td><code>swap_inverse_binding</code></td>
+<td>Rollback</td>
+<td>displaced binding round-trips to the original</td>
+</tr>
+<tr>
+<td><code>single_step_rollback</code></td>
+<td>Rollback</td>
+<td>one swap then undo = original state</td>
+</tr>
+<tr>
+<td><code>rollback_restores</code></td>
+<td>Rollback</td>
+<td>multi-step rollback via reversed inverse log</td>
+</tr>
+<tr>
+<td><code>state_total</code></td>
+<td>Rollback</td>
+<td>state is a total function (by construction)</td>
+</tr>
+<tr>
+<td><code>swap_preserves_totality</code></td>
+<td>Rollback</td>
+<td>swap preserves totality</td>
+</tr>
+<tr>
+<td><code>swap_commute</code></td>
+<td>Rollback</td>
+<td>swaps at different keys commute</td>
+</tr>
+<tr>
+<td><code>List.sizeOf_last'_le</code></td>
+<td>BlockTree</td>
+<td>termination helper for <code>canonical</code></td>
+</tr>
+<tr>
+<td><code>goFull_dfsSubtree</code></td>
+<td>BlockTree</td>
+<td>core inductive lemma (state + stack + undo)</td>
+</tr>
+<tr>
+<td><code>dfs_equiv_canonical</code></td>
+<td>BlockTree</td>
+<td>DFS walk = canonical path (main theorem)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="swappartitionlean">SwapPartition.lean</h2>
+<p>Source: <a href="https://github.com/lambdasistemi/chain-follower/blob/feat/rollback-support/lean/ChainFollower/SwapPartition.lean"><code>SwapPartition.lean</code></a></p>
+<h3 id="applyswaps_append_fst"><code>applySwaps_append_fst</code></h3>
+<p><strong>Property</strong>: applying swaps over a concatenated list equals applying the first
+list then the second (for the state component).</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kd">theorem</span><span class="w"> </span><span class="n">applySwaps_append_fst</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span><span class="o">{</span><span class="n">κ</span><span class="w"> </span><span class="n">α</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="kt">Type</span><span class="o">}</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span><span class="o">[</span><span class="n">DecidableEq</span><span class="w"> </span><span class="n">κ</span><span class="o">]</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span><span class="o">(</span><span class="n">s</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">State</span><span class="w"> </span><span class="n">κ</span><span class="w"> </span><span class="n">α</span><span class="o">)</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">    </span><span class="o">(</span><span class="n">xs</span><span class="w"> </span><span class="n">ys</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">List</span><span class="w"> </span><span class="o">(</span><span class="n">Binding</span><span class="w"> </span><span class="n">κ</span><span class="w"> </span><span class="n">α</span><span class="o">))</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">    </span><span class="o">:</span><span class="w"> </span><span class="o">(</span><span class="n">applySwaps</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">(</span><span class="n">xs</span><span class="w"> </span><span class="bp">++</span><span class="w"> </span><span class="n">ys</span><span class="o">))</span><span class="bp">.</span><span class="mi">1</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">    </span><span class="bp">=</span><span class="w"> </span><span class="o">(</span><span class="n">applySwaps</span><span class="w"> </span><span class="o">(</span><span class="n">applySwaps</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="n">xs</span><span class="o">)</span><span class="bp">.</span><span class="mi">1</span><span class="w"> </span><span class="n">ys</span><span class="o">)</span><span class="bp">.</span><span class="mi">1</span>
+</code></pre></div>
+<p>This is a structural lemma required by the induction step of <code>rollback_restores</code>.
+It says that <code>applySwaps</code> is compositional: processing <code>xs ++ ys</code> is the same as
+processing <code>xs</code> first, then <code>ys</code> from the resulting state.</p>
+<hr />
+<h2 id="rollbacklean">Rollback.lean</h2>
+<p>Source: <a href="https://github.com/lambdasistemi/chain-follower/blob/feat/rollback-support/lean/ChainFollower/Rollback.lean"><code>Rollback.lean</code></a></p>
+<h3 id="swap_inverse_restores"><code>swap_inverse_restores</code></h3>
+<p><strong>Property</strong>: swapping a binding into the state and then swapping the displaced
+binding back restores the original state at every key.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kd">theorem</span><span class="w"> </span><span class="n">swap_inverse_restores</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span><span class="o">{</span><span class="n">κ</span><span class="w"> </span><span class="n">α</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="kt">Type</span><span class="o">}</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="o">[</span><span class="n">DecidableEq</span><span class="w"> </span><span class="n">κ</span><span class="o">]</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span><span class="o">(</span><span class="n">s</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">State</span><span class="w"> </span><span class="n">κ</span><span class="w"> </span><span class="n">α</span><span class="o">)</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span><span class="o">(</span><span class="n">b</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">Binding</span><span class="w"> </span><span class="n">κ</span><span class="w"> </span><span class="n">α</span><span class="o">)</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="o">:</span><span class="w"> </span><span class="k">let</span><span class="w"> </span><span class="o">(</span><span class="n">s&#39;</span><span class="o">,</span><span class="w"> </span><span class="n">inv</span><span class="o">)</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="n">swap</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="n">b</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">      </span><span class="k">let</span><span class="w"> </span><span class="o">(</span><span class="n">s&#39;&#39;</span><span class="o">,</span><span class="w"> </span><span class="n">_</span><span class="o">)</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="n">swap</span><span class="w"> </span><span class="n">s&#39;</span><span class="w"> </span><span class="n">inv</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">      </span><span class="bp">∀</span><span class="w"> </span><span class="o">(</span><span class="n">k</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">κ</span><span class="o">),</span><span class="w"> </span><span class="n">s&#39;&#39;</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="bp">=</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="n">k</span>
+</code></pre></div>
+<p>The fundamental involution property. Every swap carries its own inverse: the
+displaced binding. This is the core reason rollback works at all.</p>
+<h3 id="swap_inverse_binding"><code>swap_inverse_binding</code></h3>
+<p><strong>Property</strong>: the displaced binding, when swapped back, produces the original
+binding as its own displaced output.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kd">theorem</span><span class="w"> </span><span class="n">swap_inverse_binding</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span><span class="o">{</span><span class="n">κ</span><span class="w"> </span><span class="n">α</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="kt">Type</span><span class="o">}</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span><span class="o">[</span><span class="n">DecidableEq</span><span class="w"> </span><span class="n">κ</span><span class="o">]</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span><span class="o">(</span><span class="n">s</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">State</span><span class="w"> </span><span class="n">κ</span><span class="w"> </span><span class="n">α</span><span class="o">)</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">    </span><span class="o">(</span><span class="n">b</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">Binding</span><span class="w"> </span><span class="n">κ</span><span class="w"> </span><span class="n">α</span><span class="o">)</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">    </span><span class="o">:</span><span class="w"> </span><span class="k">let</span><span class="w"> </span><span class="o">(</span><span class="n">s&#39;</span><span class="o">,</span><span class="w"> </span><span class="n">inv</span><span class="o">)</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="n">swap</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="n">b</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">      </span><span class="k">let</span><span class="w"> </span><span class="o">(</span><span class="n">_</span><span class="o">,</span><span class="w"> </span><span class="n">inv&#39;</span><span class="o">)</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="n">swap</span><span class="w"> </span><span class="n">s&#39;</span><span class="w"> </span><span class="n">inv</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">      </span><span class="n">inv&#39;</span><span class="w"> </span><span class="bp">=</span><span class="w"> </span><span class="n">b</span>
+</code></pre></div>
+<p>This says that the inverse of the inverse is the original. Together with
+<code>swap_inverse_restores</code>, it establishes that swap is a perfect involution on
+both the state and the binding.</p>
+<h3 id="single_step_rollback"><code>single_step_rollback</code></h3>
+<p><strong>Property</strong>: after one swap, applying the inverse restores the state (function
+extensionality, not just pointwise).</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kd">theorem</span><span class="w"> </span><span class="n">single_step_rollback</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">    </span><span class="o">{</span><span class="n">κ</span><span class="w"> </span><span class="n">α</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="kt">Type</span><span class="o">}</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span><span class="o">[</span><span class="n">DecidableEq</span><span class="w"> </span><span class="n">κ</span><span class="o">]</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span><span class="o">(</span><span class="n">s</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">State</span><span class="w"> </span><span class="n">κ</span><span class="w"> </span><span class="n">α</span><span class="o">)</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">    </span><span class="o">(</span><span class="n">b</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">Binding</span><span class="w"> </span><span class="n">κ</span><span class="w"> </span><span class="n">α</span><span class="o">)</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">    </span><span class="o">:</span><span class="w"> </span><span class="k">let</span><span class="w"> </span><span class="o">(</span><span class="n">s&#39;</span><span class="o">,</span><span class="w"> </span><span class="n">inv</span><span class="o">)</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="n">swap</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="n">b</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">      </span><span class="o">(</span><span class="n">swap</span><span class="w"> </span><span class="n">s&#39;</span><span class="w"> </span><span class="n">inv</span><span class="o">)</span><span class="bp">.</span><span class="mi">1</span><span class="w"> </span><span class="bp">=</span><span class="w"> </span><span class="n">s</span>
+</code></pre></div>
+<p>Lifts <code>swap_inverse_restores</code> from pointwise equality (<code>forall k, ...</code>) to
+propositional equality of functions via <code>funext</code>. This is the form needed by
+downstream proofs.</p>
+<h3 id="rollback_restores"><code>rollback_restores</code></h3>
+<p><strong>Property</strong>: applying a sequence of swaps and then rolling back with the
+inverse log (reversed) restores the original state.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kd">theorem</span><span class="w"> </span><span class="n">rollback_restores</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">    </span><span class="o">{</span><span class="n">κ</span><span class="w"> </span><span class="n">α</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="kt">Type</span><span class="o">}</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="o">[</span><span class="n">DecidableEq</span><span class="w"> </span><span class="n">κ</span><span class="o">]</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">    </span><span class="o">(</span><span class="n">s</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">State</span><span class="w"> </span><span class="n">κ</span><span class="w"> </span><span class="n">α</span><span class="o">)</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">    </span><span class="o">(</span><span class="n">ops</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">List</span><span class="w"> </span><span class="o">(</span><span class="n">Binding</span><span class="w"> </span><span class="n">κ</span><span class="w"> </span><span class="n">α</span><span class="o">))</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">    </span><span class="o">:</span><span class="w"> </span><span class="k">let</span><span class="w"> </span><span class="o">(</span><span class="n">s&#39;</span><span class="o">,</span><span class="w"> </span><span class="n">invLog</span><span class="o">)</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="n">applySwaps</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="n">ops</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">      </span><span class="n">rollback</span><span class="w"> </span><span class="n">s&#39;</span><span class="w"> </span><span class="n">invLog</span><span class="w"> </span><span class="bp">=</span><span class="w"> </span><span class="n">s</span>
+</code></pre></div>
+<p>The main correctness theorem for the rollback mechanism in isolation. For any
+sequence of mutations, the collected inverse log is sufficient to restore the
+original state when replayed in reverse. The proof proceeds by induction on
+<code>ops</code>, using <code>applySwaps_append_fst</code> for the cons case and
+<code>single_step_rollback</code> for the base.</p>
+<h3 id="state_total"><code>state_total</code></h3>
+<p><strong>Property</strong>: the state maps every key to exactly one value.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kd">theorem</span><span class="w"> </span><span class="n">state_total</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">    </span><span class="o">{</span><span class="n">κ</span><span class="w"> </span><span class="n">α</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="kt">Type</span><span class="o">}</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">    </span><span class="o">(</span><span class="n">s</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">State</span><span class="w"> </span><span class="n">κ</span><span class="w"> </span><span class="n">α</span><span class="o">)</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">    </span><span class="o">(</span><span class="n">k</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">κ</span><span class="o">)</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">    </span><span class="o">:</span><span class="w"> </span><span class="bp">∃</span><span class="w"> </span><span class="o">(</span><span class="n">v</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">Val</span><span class="w"> </span><span class="n">α</span><span class="o">),</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="bp">=</span><span class="w"> </span><span class="n">v</span>
+</code></pre></div>
+<p>Trivially true by construction (the state is a total function), but stated
+explicitly to document the conservation invariant: <code>|S| = |Keys|</code> always holds.</p>
+<h3 id="swap_preserves_totality"><code>swap_preserves_totality</code></h3>
+<p><strong>Property</strong>: after a swap, the resulting state still maps every key to exactly
+one value.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kd">theorem</span><span class="w"> </span><span class="n">swap_preserves_totality</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">    </span><span class="o">{</span><span class="n">κ</span><span class="w"> </span><span class="n">α</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="kt">Type</span><span class="o">}</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span><span class="o">[</span><span class="n">DecidableEq</span><span class="w"> </span><span class="n">κ</span><span class="o">]</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">    </span><span class="o">(</span><span class="n">s</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">State</span><span class="w"> </span><span class="n">κ</span><span class="w"> </span><span class="n">α</span><span class="o">)</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">    </span><span class="o">(</span><span class="n">b</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">Binding</span><span class="w"> </span><span class="n">κ</span><span class="w"> </span><span class="n">α</span><span class="o">)</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">    </span><span class="o">(</span><span class="n">k</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">κ</span><span class="o">)</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="w">    </span><span class="o">:</span><span class="w"> </span><span class="bp">∃</span><span class="w"> </span><span class="o">(</span><span class="n">v</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">Val</span><span class="w"> </span><span class="n">α</span><span class="o">),</span><span class="w"> </span><span class="o">(</span><span class="n">swap</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="n">b</span><span class="o">)</span><span class="bp">.</span><span class="mi">1</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="bp">=</span><span class="w"> </span><span class="n">v</span>
+</code></pre></div>
+<p>Again trivial by construction, but documents that swap does not break totality.
+In a model with partial maps this would be non-trivial.</p>
+<h3 id="swap_commute"><code>swap_commute</code></h3>
+<p><strong>Property</strong>: swaps at distinct keys commute -- order does not matter when
+operating on different keys.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kd">theorem</span><span class="w"> </span><span class="n">swap_commute</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">    </span><span class="o">{</span><span class="n">κ</span><span class="w"> </span><span class="n">α</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="kt">Type</span><span class="o">}</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">    </span><span class="o">[</span><span class="n">DecidableEq</span><span class="w"> </span><span class="n">κ</span><span class="o">]</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">    </span><span class="o">(</span><span class="n">s</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">State</span><span class="w"> </span><span class="n">κ</span><span class="w"> </span><span class="n">α</span><span class="o">)</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">    </span><span class="o">(</span><span class="n">b₁</span><span class="w"> </span><span class="n">b₂</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">Binding</span><span class="w"> </span><span class="n">κ</span><span class="w"> </span><span class="n">α</span><span class="o">)</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">    </span><span class="o">(</span><span class="n">h</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">b₁.key</span><span class="w"> </span><span class="bp">≠</span><span class="w"> </span><span class="n">b₂.key</span><span class="o">)</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="w">    </span><span class="o">:</span><span class="w"> </span><span class="k">let</span><span class="w"> </span><span class="o">(</span><span class="n">s₁</span><span class="o">,</span><span class="w"> </span><span class="n">_</span><span class="o">)</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="n">swap</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="n">b₁</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="w">      </span><span class="k">let</span><span class="w"> </span><span class="o">(</span><span class="n">s₂</span><span class="o">,</span><span class="w"> </span><span class="n">_</span><span class="o">)</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="n">swap</span><span class="w"> </span><span class="n">s₁</span><span class="w"> </span><span class="n">b₂</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="w">      </span><span class="k">let</span><span class="w"> </span><span class="o">(</span><span class="n">t₁</span><span class="o">,</span><span class="w"> </span><span class="n">_</span><span class="o">)</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="n">swap</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="n">b₂</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="w">      </span><span class="k">let</span><span class="w"> </span><span class="o">(</span><span class="n">t₂</span><span class="o">,</span><span class="w"> </span><span class="n">_</span><span class="o">)</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="n">swap</span><span class="w"> </span><span class="n">t₁</span><span class="w"> </span><span class="n">b₁</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="w">      </span><span class="bp">∀</span><span class="w"> </span><span class="o">(</span><span class="n">k</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">κ</span><span class="o">),</span><span class="w"> </span><span class="n">s₂</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="bp">=</span><span class="w"> </span><span class="n">t₂</span><span class="w"> </span><span class="n">k</span>
+</code></pre></div>
+<p>Not used in the main proof chain, but establishes an important property: swaps
+to independent keys are non-interfering. This justifies reasoning about
+per-key rollback independently.</p>
+<hr />
+<h2 id="blocktreelean">BlockTree.lean</h2>
+<p>Source: <a href="https://github.com/lambdasistemi/chain-follower/blob/feat/rollback-support/lean/ChainFollower/BlockTree.lean"><code>BlockTree.lean</code></a></p>
+<h3 id="listsizeof_last_le"><code>List.sizeOf_last'_le</code></h3>
+<p><strong>Property</strong>: the <code>sizeOf</code> the last element of a list is bounded by the sum of
+the seed element's size and the list's size.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kd">theorem</span><span class="w"> </span><span class="n">List.sizeOf_last&#39;_le</span><span class="w"> </span><span class="o">{</span><span class="n">α</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="kt">Type</span><span class="o">}</span><span class="w"> </span><span class="o">[</span><span class="n">SizeOf</span><span class="w"> </span><span class="n">α</span><span class="o">]</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">    </span><span class="o">(</span><span class="n">x</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">α</span><span class="o">)</span><span class="w"> </span><span class="o">(</span><span class="n">xs</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">List</span><span class="w"> </span><span class="n">α</span><span class="o">)</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">    </span><span class="o">:</span><span class="w"> </span><span class="n">sizeOf</span><span class="w"> </span><span class="o">(</span><span class="n">List.last&#39;</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="n">xs</span><span class="o">)</span><span class="w"> </span><span class="bp">≤</span><span class="w"> </span><span class="n">sizeOf</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="bp">+</span><span class="w"> </span><span class="n">sizeOf</span><span class="w"> </span><span class="n">xs</span>
+</code></pre></div>
+<p>A termination helper. The <code>canonical</code> function recurses into <code>List.last'</code> of the
+children list. Lean's termination checker needs this bound to verify that the
+recursive argument is structurally smaller.</p>
+<h3 id="gofull_dfssubtree"><code>goFull_dfsSubtree</code></h3>
+<p><strong>Property</strong>: processing a subtree's DFS walk from state <code>s</code> with stack <code>stack</code>
+yields three things simultaneously:</p>
+<ol>
+<li>The final state equals <code>applyBlocks s (canonical t)</code>.</li>
+<li>The stack has the form <code>newEntries ++ stack</code> where all new entries have
+   slots greater than the bound.</li>
+<li><code>undoTo</code> at the bound restores <code>(s, stack)</code> exactly.</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kd">theorem</span><span class="w"> </span><span class="n">goFull_dfsSubtree</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">    </span><span class="o">{</span><span class="n">κ</span><span class="w"> </span><span class="n">α</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="kt">Type</span><span class="o">}</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">    </span><span class="o">[</span><span class="n">DecidableEq</span><span class="w"> </span><span class="n">κ</span><span class="o">]</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">    </span><span class="o">(</span><span class="n">t</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">BlockTree</span><span class="w"> </span><span class="n">κ</span><span class="w"> </span><span class="n">α</span><span class="o">)</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">    </span><span class="o">(</span><span class="n">s</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">State</span><span class="w"> </span><span class="n">κ</span><span class="w"> </span><span class="n">α</span><span class="o">)</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="w">    </span><span class="o">(</span><span class="n">stack</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">List</span><span class="w"> </span><span class="o">(</span><span class="n">Nat</span><span class="w"> </span><span class="bp">×</span><span class="w"> </span><span class="n">Binding</span><span class="w"> </span><span class="n">κ</span><span class="w"> </span><span class="n">α</span><span class="o">))</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="w">    </span><span class="o">(</span><span class="n">bound</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">Nat</span><span class="o">)</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="w">    </span><span class="o">(</span><span class="n">hSlots</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">allSlotsGt</span><span class="w"> </span><span class="n">bound</span><span class="w"> </span><span class="n">t</span><span class="o">)</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="w">    </span><span class="o">(</span><span class="n">hOrd</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">slotsOrdered</span><span class="w"> </span><span class="n">t</span><span class="o">)</span>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="w">    </span><span class="o">(</span><span class="n">hStack</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="bp">∀</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="bp">∈</span><span class="w"> </span><span class="n">stack</span><span class="o">,</span><span class="w"> </span><span class="n">p</span><span class="bp">.</span><span class="mi">1</span><span class="w"> </span><span class="bp">≤</span><span class="w"> </span><span class="n">bound</span><span class="o">)</span>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="w">    </span><span class="o">:</span><span class="w"> </span><span class="o">(</span><span class="n">goFull</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="n">stack</span><span class="w"> </span><span class="o">(</span><span class="n">dfsSubtree</span><span class="w"> </span><span class="n">t</span><span class="o">))</span><span class="bp">.</span><span class="mi">1</span>
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span class="w">      </span><span class="bp">=</span><span class="w"> </span><span class="n">applyBlocks</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">(</span><span class="n">canonical</span><span class="w"> </span><span class="n">t</span><span class="o">)</span>
+<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a><span class="w">    </span><span class="bp">∧</span><span class="w"> </span><span class="o">(</span><span class="bp">∃</span><span class="w"> </span><span class="n">newEntries</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">List</span><span class="w"> </span><span class="o">(</span><span class="n">Nat</span><span class="w"> </span><span class="bp">×</span><span class="w"> </span><span class="n">Binding</span><span class="w"> </span><span class="n">κ</span><span class="w"> </span><span class="n">α</span><span class="o">),</span>
+<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a><span class="w">        </span><span class="o">(</span><span class="n">goFull</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="n">stack</span><span class="w"> </span><span class="o">(</span><span class="n">dfsSubtree</span><span class="w"> </span><span class="n">t</span><span class="o">))</span><span class="bp">.</span><span class="mi">2</span>
+<a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a><span class="w">        </span><span class="bp">=</span><span class="w"> </span><span class="n">newEntries</span><span class="w"> </span><span class="bp">++</span><span class="w"> </span><span class="n">stack</span>
+<a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a><span class="w">        </span><span class="bp">∧</span><span class="w"> </span><span class="n">stackSlotsGt</span><span class="w"> </span><span class="n">bound</span><span class="w"> </span><span class="n">newEntries</span><span class="o">)</span>
+<a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a><span class="w">    </span><span class="bp">∧</span><span class="w"> </span><span class="n">processEvents.undoTo</span>
+<a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a><span class="w">        </span><span class="o">(</span><span class="n">goFull</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="n">stack</span><span class="w"> </span><span class="o">(</span><span class="n">dfsSubtree</span><span class="w"> </span><span class="n">t</span><span class="o">))</span><span class="bp">.</span><span class="mi">1</span>
+<a id="__codelineno-9-19" name="__codelineno-9-19" href="#__codelineno-9-19"></a><span class="w">        </span><span class="o">(</span><span class="n">goFull</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="n">stack</span><span class="w"> </span><span class="o">(</span><span class="n">dfsSubtree</span><span class="w"> </span><span class="n">t</span><span class="o">))</span><span class="bp">.</span><span class="mi">2</span>
+<a id="__codelineno-9-20" name="__codelineno-9-20" href="#__codelineno-9-20"></a><span class="w">        </span><span class="n">bound</span>
+<a id="__codelineno-9-21" name="__codelineno-9-21" href="#__codelineno-9-21"></a><span class="w">      </span><span class="bp">=</span><span class="w"> </span><span class="o">(</span><span class="n">s</span><span class="o">,</span><span class="w"> </span><span class="n">stack</span><span class="o">)</span>
+</code></pre></div>
+<p>This is the core of the entire formalization. The three conjuncts must be proved
+together because the induction hypothesis for the multi-child case
+(<code>goFull_interleaveRollbacks</code>) requires all three: you cannot prove state
+correctness without knowing the stack shape, and you cannot prove stack shape
+without knowing rollback works.</p>
+<p>The proof proceeds by structural induction on the tree, with cases for leaf,
+single-child fork, and multi-child fork. The multi-child case delegates to
+<code>goFull_interleaveRollbacks</code>, which shows that each non-rightmost child's DFS
+followed by a rollback is a no-op.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Preconditions <code>allSlotsGt</code> and <code>slotsOrdered</code> correspond to the blockchain
+invariant that slot numbers increase monotonically from parent to child.
+Without this, <code>undoTo</code> could not correctly identify which stack entries to
+pop.</p>
+</div>
+<h3 id="dfs_equiv_canonical"><code>dfs_equiv_canonical</code></h3>
+<p><strong>Property</strong>: for any well-formed block tree, processing the full DFS walk
+produces the same state as applying only the canonical (rightmost) path.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="kd">theorem</span><span class="w"> </span><span class="n">dfs_equiv_canonical</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">    </span><span class="o">{</span><span class="n">κ</span><span class="w"> </span><span class="n">α</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="kt">Type</span><span class="o">}</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">    </span><span class="o">[</span><span class="n">DecidableEq</span><span class="w"> </span><span class="n">κ</span><span class="o">]</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">    </span><span class="o">(</span><span class="n">t</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">BlockTree</span><span class="w"> </span><span class="n">κ</span><span class="w"> </span><span class="n">α</span><span class="o">)</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="w">    </span><span class="o">(</span><span class="n">k</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">Nat</span><span class="o">)</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="w">    </span><span class="o">(</span><span class="n">_wf</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">wellFormed</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="n">t</span><span class="o">)</span>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="w">    </span><span class="o">(</span><span class="n">s</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">State</span><span class="w"> </span><span class="n">κ</span><span class="w"> </span><span class="n">α</span><span class="o">)</span>
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="w">    </span><span class="o">(</span><span class="n">hSlots</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">allSlotsGt</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="n">t</span><span class="o">)</span>
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="w">    </span><span class="o">(</span><span class="n">hOrd</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">slotsOrdered</span><span class="w"> </span><span class="n">t</span><span class="o">)</span>
+<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="w">    </span><span class="o">:</span><span class="w"> </span><span class="n">processEvents</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">(</span><span class="n">dfs</span><span class="w"> </span><span class="n">t</span><span class="o">)</span>
+<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span class="w">    </span><span class="bp">=</span><span class="w"> </span><span class="n">applyBlocks</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">(</span><span class="n">canonical</span><span class="w"> </span><span class="n">t</span><span class="o">)</span>
+</code></pre></div>
+<p>The main theorem. It is a one-line corollary of <code>goFull_dfsSubtree</code>: unfold
+<code>dfs</code> and <code>processEvents</code>, rewrite via <code>go_eq_goFull_fst</code>, and extract the
+first conjunct.</p>
+<p>This theorem says: no matter how many forks the follower traverses, the final
+state depends only on the canonical chain. The journey through dead-end branches
+is perfectly undone by the rollback mechanism.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.indexes", "navigation.sections", "navigation.path", "toc.integrate", "content.code.copy"], "search": "../../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.e71a0d61.min.js"></script>
+      
+    
+  </body>
+</html>
