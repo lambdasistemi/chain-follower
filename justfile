@@ -38,6 +38,21 @@ test:
     #!/usr/bin/env bash
     cabal test all -O0
 
+# Build documentation
+build-docs:
+    #!/usr/bin/env bash
+    mkdocs build
+
+# Serve documentation locally
+serve-docs:
+    #!/usr/bin/env bash
+    mkdocs serve
+
+# Deploy documentation to GitHub Pages
+deploy-docs:
+    #!/usr/bin/env bash
+    nix --quiet develop github:paolino/dev-assets?dir=mkdocs -c mkdocs gh-deploy --force
+
 # Full CI pipeline
 ci:
     #!/usr/bin/env bash
