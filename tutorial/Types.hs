@@ -70,28 +70,39 @@ data BalanceInv = BalanceInv
 
 -- * Backend B: Audit (impure detection, semantic inverse)
 
--- | Audit event detected by reading current state.
---
--- Detection is impure because we need to check
--- if the sender is already flagged (like the cage
--- follower needs to resolve spent UTxOs).
+{- | Audit event detected by reading current state.
+
+Detection is impure because we need to check
+if the sender is already flagged (like the cage
+follower needs to resolve spent UTxOs).
+-}
 data AuditEvent
     = -- | Flag an account as suspicious (large transfer).
-      FlagAccount String String
-    -- ^ account, reason
+      FlagAccount
+        String
+        String
+        -- ^ account, reason
     | -- | Add a note to a flagged account's history.
-      AddNote String String
-    -- ^ account, note
+      AddNote
+        String
+        String
+        -- ^ account, note
     deriving stock (Show, Eq)
 
 -- | Audit inverse — semantic undo, not syntactic.
 data AuditInv
     = -- | Restore a flag that was removed.
-      RestoreFlag String String
-    -- ^ account, old reason
+      RestoreFlag
+        String
+        String
+        -- ^ account, old reason
     | -- | Remove a flag that was added.
       RemoveFlag String
-    | -- | Remove a note that was added.
-      RemoveNote String String
-    -- ^ account, note
+    | -- | Remove a note that was added (no prior note).
+      RemoveNote String
+    | -- | Restore a note that was overwritten.
+      RestoreNote
+        String
+        String
+        -- ^ account, old note
     deriving stock (Show, Eq)
