@@ -248,7 +248,7 @@ Balances: pure extraction, fast apply.
 Audit: impure detection (reads DB), fast apply.
 -}
 composedRestoring
-    :: Restoring IO (T cf op) Block ComposedInv
+    :: Restoring IO (T cf op) Block ComposedInv Int
 composedRestoring =
     Restoring
         { restore = \block -> do
@@ -266,7 +266,7 @@ composedRestoring =
 Both backends in one transaction, inverses paired.
 -}
 composedFollowing
-    :: Following IO (T cf op) Block ComposedInv
+    :: Following IO (T cf op) Block ComposedInv Int
 composedFollowing =
     Following
         { follow = \block -> do
@@ -281,7 +281,16 @@ composedFollowing =
                         { balanceInvs = bInvs
                         , auditInvs = aInvs
                         }
-            pure (inv, composedFollowing)
+                totalAmount =
+                    sum
+                        [ transferAmount t
+                        | t <- blockTransfers block
+                        ]
+            pure
+                ( inv
+                , Just totalAmount
+                , composedFollowing
+                )
         , toRestoring = pure composedRestoring
         , applyInverse =
             \ComposedInv{balanceInvs, auditInvs} ->
@@ -295,7 +304,7 @@ composedFollowing =
 
 -- | Backend initialization for the composed backend.
 composedInit
-    :: Init IO (T cf op) Block ComposedInv
+    :: Init IO (T cf op) Block ComposedInv Int
 composedInit =
     Init
         { startRestoring = pure composedRestoring

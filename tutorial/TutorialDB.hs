@@ -82,7 +82,7 @@ import Types
 data AllCols c where
     InBackend :: UnifiedCols c -> AllCols c
     Rollbacks
-        :: AllCols (KV Int (RollbackPoint ComposedInv ()))
+        :: AllCols (KV Int (RollbackPoint ComposedInv Int))
 
 instance GEq AllCols where
     geq (InBackend a) (InBackend b) = geq a b

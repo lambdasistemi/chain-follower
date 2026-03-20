@@ -66,6 +66,7 @@ backend
         )
         Block
         ComposedInv
+        Int
 backend = liftInit (mapColumns InBackend) composedInit
 
 {- | Slot offset: all test slots start at this value

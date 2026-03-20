@@ -161,6 +161,7 @@ mkAuditRestoring
         (Transaction IO cf AuditCols op)
         Block
         [AuditInv]
+        ()
 mkAuditRestoring =
     Restoring
         { restore = \block -> do
@@ -178,12 +179,13 @@ mkAuditFollowing
         (Transaction IO cf AuditCols op)
         Block
         [AuditInv]
+        ()
 mkAuditFollowing =
     Following
         { follow = \block -> do
             events <- detectEvents block
             invs <- mapM applyWithInverse events
-            pure (invs, mkAuditFollowing)
+            pure (invs, Nothing, mkAuditFollowing)
         , toRestoring =
             pure mkAuditRestoring
         , applyInverse =

@@ -76,6 +76,7 @@ backend
         (Transaction IO ColumnFamily AllCols BatchOp)
         Block
         ComposedInv
+        Int
 backend =
     liftInit (mapColumns InBackend) composedInit
 
@@ -400,6 +401,7 @@ type TutPhase =
         BatchOp
         Block
         ComposedInv
+        Int
 
 -- | Concrete following for the tutorial.
 type TutFollowing =
@@ -413,6 +415,7 @@ type TutFollowing =
         )
         Block
         ComposedInv
+        Int
 
 -- * Phase fold helpers
 
