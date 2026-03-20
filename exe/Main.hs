@@ -318,15 +318,19 @@ main = do
                     drainInput
                     p <- readIORef phaseRef
                     slot <- readIORef slotRef
-                    let phaseLabel = case p of
-                            InRestoration _ -> "RESTORE"
-                            InFollowing _ -> "FOLLOW"
+                    let (phaseLabel, hint) = case p of
+                            InRestoration _ ->
+                                ("RESTORE", "f:forward t:transition q:quit")
+                            InFollowing _ ->
+                                ("FOLLOW", "f:forward r:rollback q:quit")
                     putStr $
                         "  ["
                             ++ phaseLabel
                             ++ " slot:"
                             ++ show (slot - 1)
-                            ++ "] > "
+                            ++ "] ("
+                            ++ hint
+                            ++ ") > "
                     hFlush stdout
                     c <- getChar
                     putStrLn ""
