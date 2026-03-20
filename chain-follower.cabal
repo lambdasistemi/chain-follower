@@ -61,3 +61,19 @@ library
 
   hs-source-dirs:   lib
   default-language: Haskell2010
+
+library tutorial
+  import:           warnings
+  visibility:       public
+  hs-source-dirs:   tutorial
+  default-language: Haskell2010
+  exposed-modules:
+    Audit
+    Balances
+    Composed
+    Types
+
+  build-depends:
+    , base                                     >=4.17 && <5
+    , chain-follower
+    , rocksdb-kv-transactions:kv-transactions
