@@ -1,0 +1,661 @@
+digraph calligraphy {
+    node [style=filled fillcolor="#ffffffcf"];
+    graph [outputorder=edgesfirst];
+    subgraph cluster_module_module_0 {
+        label="Types";
+        bgcolor="whitesmoke"
+        subgraph cluster_node_0 {
+            style=invis;
+            node_0 [label="AuditEvent",shape=octagon,style="filled"];
+            node_1 [label="AddNote",shape=box,style="filled"];
+            "node_0" -> "node_1" [style=dashed,arrowhead=none];
+            node_2 [label="FlagAccount",shape=box,style="filled"];
+            "node_0" -> "node_2" [style=dashed,arrowhead=none];
+        }
+        subgraph cluster_node_3 {
+            style=invis;
+            node_3 [label="AuditInv",shape=octagon,style="filled"];
+            node_4 [label="RemoveFlag",shape=box,style="filled"];
+            "node_3" -> "node_4" [style=dashed,arrowhead=none];
+            node_5 [label="RemoveNote",shape=box,style="filled"];
+            "node_3" -> "node_5" [style=dashed,arrowhead=none];
+            node_6 [label="RestoreFlag",shape=box,style="filled"];
+            "node_3" -> "node_6" [style=dashed,arrowhead=none];
+        }
+        subgraph cluster_node_7 {
+            style=invis;
+            node_7 [label="BalanceInv",shape=octagon,style="filled"];
+            subgraph cluster_node_8 {
+                style=invis;
+                node_8 [label="BalanceInv",shape=box,style="filled"];
+                node_9 [label="invAccount",shape=box,style="rounded, filled"];
+                "node_8" -> "node_9" [style=dashed,arrowhead=none];
+                node_10 [label="invOldBalance",shape=box,style="rounded, filled"];
+                "node_8" -> "node_10" [style=dashed,arrowhead=none];
+            }
+            "node_7" -> "node_8" [style=dashed,arrowhead=none];
+        }
+        subgraph cluster_node_11 {
+            style=invis;
+            node_11 [label="BalanceOp",shape=octagon,style="filled"];
+            node_12 [label="Credit",shape=box,style="filled"];
+            "node_11" -> "node_12" [style=dashed,arrowhead=none];
+            node_13 [label="Debit",shape=box,style="filled"];
+            "node_11" -> "node_13" [style=dashed,arrowhead=none];
+        }
+        subgraph cluster_node_14 {
+            style=invis;
+            node_14 [label="Block",shape=octagon,style="filled"];
+            subgraph cluster_node_15 {
+                style=invis;
+                node_15 [label="Block",shape=box,style="filled"];
+                node_16 [label="blockSlot",shape=box,style="rounded, filled"];
+                "node_15" -> "node_16" [style=dashed,arrowhead=none];
+                node_17 [label="blockTransfers",shape=box,style="rounded, filled"];
+                "node_15" -> "node_17" [style=dashed,arrowhead=none];
+            }
+            "node_14" -> "node_15" [style=dashed,arrowhead=none];
+        }
+        subgraph cluster_node_18 {
+            style=invis;
+            node_18 [label="Transfer",shape=octagon,style="filled"];
+            subgraph cluster_node_19 {
+                style=invis;
+                node_19 [label="Transfer",shape=box,style="filled"];
+                node_20 [label="transferAmount",shape=box,style="rounded, filled"];
+                "node_19" -> "node_20" [style=dashed,arrowhead=none];
+                node_21 [label="transferFrom",shape=box,style="rounded, filled"];
+                "node_19" -> "node_21" [style=dashed,arrowhead=none];
+                node_22 [label="transferTo",shape=box,style="rounded, filled"];
+                "node_19" -> "node_22" [style=dashed,arrowhead=none];
+            }
+            "node_18" -> "node_19" [style=dashed,arrowhead=none];
+        }
+    }
+    subgraph cluster_module_module_1 {
+        label="Balances";
+        bgcolor="whitesmoke"
+        subgraph cluster_node_23 {
+            style=invis;
+            node_23 [label="BalanceCols",shape=octagon,style="filled"];
+            node_24 [label="BalanceKV",shape=box,style="filled"];
+            "node_23" -> "node_24" [style=dashed,arrowhead=none];
+        }
+        subgraph cluster_node_25 {
+            style=invis;
+            node_25 [label="applyFast",shape=ellipse,style="dashed, filled"];
+            node_26 [label="newBal",shape=ellipse,style="dashed, filled"];
+            "node_25" -> "node_26" [style=dashed,arrowhead=none];
+        }
+        subgraph cluster_node_27 {
+            style=invis;
+            node_27 [label="applyWithInverse",shape=ellipse,style="dashed, filled"];
+            node_28 [label="newBal",shape=ellipse,style="dashed, filled"];
+            "node_27" -> "node_28" [style=dashed,arrowhead=none];
+        }
+        subgraph cluster_node_29 {
+            style=invis;
+            node_29 [label="extractOps",shape=ellipse,style="filled"];
+            node_30 [label="transferToOps",shape=ellipse,style="dashed, filled"];
+            "node_29" -> "node_30" [style=dashed,arrowhead=none];
+        }
+        node_31 [label="mkBalancesFollowing",shape=ellipse,style="filled"];
+        node_32 [label="mkBalancesRestoring",shape=ellipse,style="filled"];
+        node_33 [label="undoInverse",shape=ellipse,style="dashed, filled"];
+    }
+    subgraph cluster_module_module_2 {
+        label="Composed";
+        bgcolor="whitesmoke"
+        subgraph cluster_node_34 {
+            style=invis;
+            node_34 [label="ComposedInv",shape=octagon,style="filled"];
+            subgraph cluster_node_35 {
+                style=invis;
+                node_35 [label="ComposedInv",shape=box,style="filled"];
+                node_36 [label="auditInvs",shape=box,style="rounded, filled"];
+                "node_35" -> "node_36" [style=dashed,arrowhead=none];
+                node_37 [label="balanceInvs",shape=box,style="rounded, filled"];
+                "node_35" -> "node_37" [style=dashed,arrowhead=none];
+            }
+            "node_34" -> "node_35" [style=dashed,arrowhead=none];
+        }
+        node_38 [label="T",shape=octagon,style="dashed, filled"];
+        subgraph cluster_node_39 {
+            style=invis;
+            node_39 [label="UnifiedCols",shape=octagon,style="filled"];
+            node_40 [label="InAudit",shape=box,style="filled"];
+            "node_39" -> "node_40" [style=dashed,arrowhead=none];
+            node_41 [label="InBalance",shape=box,style="filled"];
+            "node_39" -> "node_41" [style=dashed,arrowhead=none];
+        }
+        node_42 [label="applyAuditEvent",shape=ellipse,style="dashed, filled"];
+        node_43 [label="applyAuditEventFast",shape=ellipse,style="dashed, filled"];
+        subgraph cluster_node_44 {
+            style=invis;
+            node_44 [label="applyBalanceOp",shape=ellipse,style="dashed, filled"];
+            node_45 [label="newBal",shape=ellipse,style="dashed, filled"];
+            "node_44" -> "node_45" [style=dashed,arrowhead=none];
+        }
+        subgraph cluster_node_46 {
+            style=invis;
+            node_46 [label="applyBalanceOpFast",shape=ellipse,style="dashed, filled"];
+            node_47 [label="newBal",shape=ellipse,style="dashed, filled"];
+            "node_46" -> "node_47" [style=dashed,arrowhead=none];
+        }
+        node_48 [label="auditDeleteFlag",shape=ellipse,style="dashed, filled"];
+        node_49 [label="auditDeleteNote",shape=ellipse,style="dashed, filled"];
+        node_50 [label="auditInsertFlag",shape=ellipse,style="dashed, filled"];
+        node_51 [label="auditInsertNote",shape=ellipse,style="dashed, filled"];
+        node_52 [label="auditQueryFlag",shape=ellipse,style="dashed, filled"];
+        node_53 [label="balanceDelete",shape=ellipse,style="dashed, filled"];
+        node_54 [label="balanceInsert",shape=ellipse,style="dashed, filled"];
+        node_55 [label="balanceQuery",shape=ellipse,style="dashed, filled"];
+        subgraph cluster_node_56 {
+            style=invis;
+            node_56 [label="composedFollowing",shape=ellipse,style="filled"];
+            node_57 [label="inv",shape=ellipse,style="dashed, filled"];
+            "node_56" -> "node_57" [style=dashed,arrowhead=none];
+        }
+        node_58 [label="composedRestoring",shape=ellipse,style="filled"];
+        subgraph cluster_node_59 {
+            style=invis;
+            node_59 [label="detectAuditEvents",shape=ellipse,style="dashed, filled"];
+            node_60 [label="detect",shape=ellipse,style="dashed, filled"];
+            "node_59" -> "node_60" [style=dashed,arrowhead=none];
+        }
+        node_61 [label="undoAuditInv",shape=ellipse,style="dashed, filled"];
+        node_62 [label="undoBalanceInv",shape=ellipse,style="dashed, filled"];
+    }
+    subgraph cluster_module_module_3 {
+        label="ChainFollower.Rollbacks.Types";
+        bgcolor="whitesmoke"
+        subgraph cluster_node_63 {
+            style=invis;
+            node_63 [label="Operation",shape=octagon,style="filled"];
+            node_64 [label="Delete",shape=box,style="filled"];
+            "node_63" -> "node_64" [style=dashed,arrowhead=none];
+            node_65 [label="Insert",shape=box,style="filled"];
+            "node_63" -> "node_65" [style=dashed,arrowhead=none];
+        }
+        subgraph cluster_node_66 {
+            style=invis;
+            node_66 [label="RollbackPoint",shape=octagon,style="filled"];
+            subgraph cluster_node_67 {
+                style=invis;
+                node_67 [label="RollbackPoint",shape=box,style="filled"];
+                node_68 [label="rpInverses",shape=box,style="rounded, filled"];
+                "node_67" -> "node_68" [style=dashed,arrowhead=none];
+                node_69 [label="rpMeta",shape=box,style="rounded, filled"];
+                "node_67" -> "node_69" [style=dashed,arrowhead=none];
+            }
+            "node_66" -> "node_67" [style=dashed,arrowhead=none];
+        }
+        node_70 [label="inverseOf",shape=ellipse,style="filled"];
+    }
+    subgraph cluster_module_module_4 {
+        label="ChainFollower.Rollbacks.Store";
+        bgcolor="whitesmoke"
+        subgraph cluster_node_71 {
+            style=invis;
+            node_71 [label="RollbackResult",shape=octagon,style="filled"];
+            node_72 [label="RollbackImpossible",shape=box,style="filled"];
+            "node_71" -> "node_72" [style=dashed,arrowhead=none];
+            node_73 [label="RollbackSucceeded",shape=box,style="filled"];
+            "node_71" -> "node_73" [style=dashed,arrowhead=none];
+        }
+        node_74 [label="armageddonCleanup",shape=ellipse,style="filled"];
+        node_75 [label="armageddonSetup",shape=ellipse,style="filled"];
+        node_76 [label="countPoints",shape=ellipse,style="filled"];
+        node_77 [label="pruneBelow",shape=ellipse,style="filled"];
+        node_78 [label="queryTip",shape=ellipse,style="filled"];
+        subgraph cluster_node_79 {
+            style=invis;
+            node_79 [label="rollbackTo",shape=ellipse,style="filled"];
+            node_80 [label="walkBack",shape=ellipse,style="dashed, filled"];
+            "node_79" -> "node_80" [style=dashed,arrowhead=none];
+        }
+        node_81 [label="storeRollbackPoint",shape=ellipse,style="filled"];
+    }
+    subgraph cluster_module_module_5 {
+        label="ChainFollower.Rollbacks.Column";
+        bgcolor="whitesmoke"
+        node_82 [label="RollbackCol",shape=octagon,style="filled"];
+        subgraph cluster_node_83 {
+            style=invis;
+            node_83 [label="RollbackColumn",shape=octagon,style="filled"];
+            node_84 [label="RollbackPoints",shape=box,style="filled"];
+            "node_83" -> "node_84" [style=dashed,arrowhead=none];
+        }
+        node_85 [label="RollbackKV",shape=octagon,style="filled"];
+    }
+    subgraph cluster_module_module_6 {
+        label="ChainFollower.Runner";
+        bgcolor="whitesmoke"
+        subgraph cluster_node_86 {
+            style=invis;
+            node_86 [label="Phase",shape=octagon,style="filled"];
+            node_87 [label="InFollowing",shape=box,style="filled"];
+            "node_86" -> "node_87" [style=dashed,arrowhead=none];
+            node_88 [label="InRestoration",shape=box,style="filled"];
+            "node_86" -> "node_88" [style=dashed,arrowhead=none];
+        }
+        node_89 [label="T",shape=octagon,style="dashed, filled"];
+        node_90 [label="processBlock",shape=ellipse,style="filled"];
+        node_91 [label="pruneOldPoints",shape=ellipse,style="filled"];
+        node_92 [label="rollbackTo",shape=ellipse,style="filled"];
+    }
+    subgraph cluster_module_module_7 {
+        label="ChainFollower.Backend";
+        bgcolor="whitesmoke"
+        subgraph cluster_node_93 {
+            style=invis;
+            node_93 [label="Following",shape=octagon,style="filled"];
+            subgraph cluster_node_94 {
+                style=invis;
+                node_94 [label="Following",shape=box,style="filled"];
+                node_95 [label="applyInverse",shape=box,style="rounded, filled"];
+                "node_94" -> "node_95" [style=dashed,arrowhead=none];
+                node_96 [label="follow",shape=box,style="rounded, filled"];
+                "node_94" -> "node_96" [style=dashed,arrowhead=none];
+                node_97 [label="toRestoring",shape=box,style="rounded, filled"];
+                "node_94" -> "node_97" [style=dashed,arrowhead=none];
+            }
+            "node_93" -> "node_94" [style=dashed,arrowhead=none];
+        }
+        subgraph cluster_node_98 {
+            style=invis;
+            node_98 [label="Init",shape=octagon,style="filled"];
+            node_99 [label="ResumeFollowing",shape=box,style="filled"];
+            "node_98" -> "node_99" [style=dashed,arrowhead=none];
+            node_100 [label="StartRestoring",shape=box,style="filled"];
+            "node_98" -> "node_100" [style=dashed,arrowhead=none];
+        }
+        subgraph cluster_node_101 {
+            style=invis;
+            node_101 [label="Restoring",shape=octagon,style="filled"];
+            subgraph cluster_node_102 {
+                style=invis;
+                node_102 [label="Restoring",shape=box,style="filled"];
+                node_103 [label="restore",shape=box,style="rounded, filled"];
+                "node_102" -> "node_103" [style=dashed,arrowhead=none];
+                node_104 [label="toFollowing",shape=box,style="rounded, filled"];
+                "node_102" -> "node_104" [style=dashed,arrowhead=none];
+            }
+            "node_101" -> "node_102" [style=dashed,arrowhead=none];
+        }
+    }
+    subgraph cluster_module_module_8 {
+        label="Audit";
+        bgcolor="whitesmoke"
+        subgraph cluster_node_105 {
+            style=invis;
+            node_105 [label="AuditCols",shape=octagon,style="filled"];
+            node_106 [label="FlagKV",shape=box,style="filled"];
+            "node_105" -> "node_106" [style=dashed,arrowhead=none];
+            node_107 [label="NoteKV",shape=box,style="filled"];
+            "node_105" -> "node_107" [style=dashed,arrowhead=none];
+        }
+        node_108 [label="applyFast",shape=ellipse,style="dashed, filled"];
+        node_109 [label="applyWithInverse",shape=ellipse,style="dashed, filled"];
+        subgraph cluster_node_110 {
+            style=invis;
+            node_110 [label="detectEvents",shape=ellipse,style="dashed, filled"];
+            node_111 [label="detectFromTransfer",shape=ellipse,style="dashed, filled"];
+            "node_110" -> "node_111" [style=dashed,arrowhead=none];
+        }
+        node_112 [label="mkAuditFollowing",shape=ellipse,style="filled"];
+        node_113 [label="mkAuditRestoring",shape=ellipse,style="filled"];
+        node_114 [label="threshold",shape=ellipse,style="filled"];
+        node_115 [label="undoInverse",shape=ellipse,style="dashed, filled"];
+    }
+    subgraph cluster_module_module_9 {
+        label="ChainFollower";
+        bgcolor="whitesmoke"
+        subgraph cluster_node_116 {
+            style=invis;
+            node_116 [label="Follower",shape=octagon,style="filled"];
+            subgraph cluster_node_117 {
+                style=invis;
+                node_117 [label="Follower",shape=box,style="filled"];
+                node_118 [label="rollBackward",shape=box,style="rounded, filled"];
+                "node_117" -> "node_118" [style=dashed,arrowhead=none];
+                node_119 [label="rollForward",shape=box,style="rounded, filled"];
+                "node_117" -> "node_119" [style=dashed,arrowhead=none];
+            }
+            "node_116" -> "node_117" [style=dashed,arrowhead=none];
+        }
+        subgraph cluster_node_120 {
+            style=invis;
+            node_120 [label="Intersector",shape=octagon,style="filled"];
+            subgraph cluster_node_121 {
+                style=invis;
+                node_121 [label="Intersector",shape=box,style="filled"];
+                node_122 [label="intersectFound",shape=box,style="rounded, filled"];
+                "node_121" -> "node_122" [style=dashed,arrowhead=none];
+                node_123 [label="intersectNotFound",shape=box,style="rounded, filled"];
+                "node_121" -> "node_123" [style=dashed,arrowhead=none];
+            }
+            "node_120" -> "node_121" [style=dashed,arrowhead=none];
+        }
+        subgraph cluster_node_124 {
+            style=invis;
+            node_124 [label="ProgressOrRewind",shape=octagon,style="filled"];
+            node_125 [label="Progress",shape=box,style="filled"];
+            "node_124" -> "node_125" [style=dashed,arrowhead=none];
+            node_126 [label="Reset",shape=box,style="filled"];
+            "node_124" -> "node_126" [style=dashed,arrowhead=none];
+            node_127 [label="Rewind",shape=box,style="filled"];
+            "node_124" -> "node_127" [style=dashed,arrowhead=none];
+        }
+    }
+    "node_101" -> "node_100" [dir=back];
+    "node_101" -> "node_103" [dir=back];
+    "node_93" -> "node_104" [dir=back];
+    "node_105" -> "node_106" [dir=back];
+    "node_105" -> "node_107" [dir=back];
+    "node_1" -> "node_108" [dir=back];
+    "node_106" -> "node_108" [dir=back];
+    "node_107" -> "node_108" [dir=back];
+    "node_2" -> "node_108" [dir=back];
+    "node_1" -> "node_109" [dir=back];
+    "node_106" -> "node_109" [dir=back];
+    "node_107" -> "node_109" [dir=back];
+    "node_2" -> "node_109" [dir=back];
+    "node_4" -> "node_109" [dir=back];
+    "node_5" -> "node_109" [dir=back];
+    "node_6" -> "node_109" [dir=back];
+    "node_111" -> "node_110" [dir=back];
+    "node_15" -> "node_110" [dir=back];
+    "node_1" -> "node_111" [dir=back];
+    "node_106" -> "node_111" [dir=back];
+    "node_114" -> "node_111" [dir=back];
+    "node_19" -> "node_111" [dir=back];
+    "node_2" -> "node_111" [dir=back];
+    "node_109" -> "node_112" [dir=back];
+    "node_110" -> "node_112" [dir=back];
+    "node_113" -> "node_112" [dir=back];
+    "node_115" -> "node_112" [dir=back];
+    "node_94" -> "node_112" [dir=back];
+    "node_96" -> "node_112" [dir=back];
+    "node_102" -> "node_113" [dir=back];
+    "node_103" -> "node_113" [dir=back];
+    "node_104" -> "node_113" [dir=back];
+    "node_108" -> "node_113" [dir=back];
+    "node_110" -> "node_113" [dir=back];
+    "node_112" -> "node_113" [dir=back];
+    "node_106" -> "node_115" [dir=back];
+    "node_107" -> "node_115" [dir=back];
+    "node_4" -> "node_115" [dir=back];
+    "node_5" -> "node_115" [dir=back];
+    "node_6" -> "node_115" [dir=back];
+    "node_124" -> "node_118" [dir=back];
+    "node_116" -> "node_119" [dir=back];
+    "node_116" -> "node_122" [dir=back];
+    "node_120" -> "node_123" [dir=back];
+    "node_116" -> "node_125" [dir=back];
+    "node_120" -> "node_126" [dir=back];
+    "node_120" -> "node_127" [dir=back];
+    "node_18" -> "node_17" [dir=back];
+    "node_23" -> "node_24" [dir=back];
+    "node_12" -> "node_25" [dir=back];
+    "node_13" -> "node_25" [dir=back];
+    "node_24" -> "node_25" [dir=back];
+    "node_26" -> "node_25" [dir=back];
+    "node_10" -> "node_27" [dir=back];
+    "node_12" -> "node_27" [dir=back];
+    "node_13" -> "node_27" [dir=back];
+    "node_24" -> "node_27" [dir=back];
+    "node_28" -> "node_27" [dir=back];
+    "node_8" -> "node_27" [dir=back];
+    "node_9" -> "node_27" [dir=back];
+    "node_15" -> "node_29" [dir=back];
+    "node_30" -> "node_29" [dir=back];
+    "node_12" -> "node_30" [dir=back];
+    "node_13" -> "node_30" [dir=back];
+    "node_19" -> "node_30" [dir=back];
+    "node_27" -> "node_31" [dir=back];
+    "node_29" -> "node_31" [dir=back];
+    "node_32" -> "node_31" [dir=back];
+    "node_33" -> "node_31" [dir=back];
+    "node_94" -> "node_31" [dir=back];
+    "node_95" -> "node_31" [dir=back];
+    "node_96" -> "node_31" [dir=back];
+    "node_97" -> "node_31" [dir=back];
+    "node_102" -> "node_32" [dir=back];
+    "node_103" -> "node_32" [dir=back];
+    "node_104" -> "node_32" [dir=back];
+    "node_25" -> "node_32" [dir=back];
+    "node_29" -> "node_32" [dir=back];
+    "node_31" -> "node_32" [dir=back];
+    "node_24" -> "node_33" [dir=back];
+    "node_8" -> "node_33" [dir=back];
+    "node_3" -> "node_36" [dir=back];
+    "node_7" -> "node_37" [dir=back];
+    "node_39" -> "node_38" [dir=back];
+    "node_105" -> "node_40" [dir=back];
+    "node_39" -> "node_40" [dir=back];
+    "node_23" -> "node_41" [dir=back];
+    "node_39" -> "node_41" [dir=back];
+    "node_1" -> "node_42" [dir=back];
+    "node_2" -> "node_42" [dir=back];
+    "node_4" -> "node_42" [dir=back];
+    "node_5" -> "node_42" [dir=back];
+    "node_50" -> "node_42" [dir=back];
+    "node_51" -> "node_42" [dir=back];
+    "node_52" -> "node_42" [dir=back];
+    "node_6" -> "node_42" [dir=back];
+    "node_1" -> "node_43" [dir=back];
+    "node_2" -> "node_43" [dir=back];
+    "node_50" -> "node_43" [dir=back];
+    "node_51" -> "node_43" [dir=back];
+    "node_10" -> "node_44" [dir=back];
+    "node_12" -> "node_44" [dir=back];
+    "node_13" -> "node_44" [dir=back];
+    "node_45" -> "node_44" [dir=back];
+    "node_54" -> "node_44" [dir=back];
+    "node_55" -> "node_44" [dir=back];
+    "node_8" -> "node_44" [dir=back];
+    "node_9" -> "node_44" [dir=back];
+    "node_12" -> "node_46" [dir=back];
+    "node_13" -> "node_46" [dir=back];
+    "node_47" -> "node_46" [dir=back];
+    "node_54" -> "node_46" [dir=back];
+    "node_55" -> "node_46" [dir=back];
+    "node_106" -> "node_48" [dir=back];
+    "node_40" -> "node_48" [dir=back];
+    "node_107" -> "node_49" [dir=back];
+    "node_40" -> "node_49" [dir=back];
+    "node_106" -> "node_50" [dir=back];
+    "node_40" -> "node_50" [dir=back];
+    "node_107" -> "node_51" [dir=back];
+    "node_40" -> "node_51" [dir=back];
+    "node_106" -> "node_52" [dir=back];
+    "node_40" -> "node_52" [dir=back];
+    "node_24" -> "node_53" [dir=back];
+    "node_41" -> "node_53" [dir=back];
+    "node_24" -> "node_54" [dir=back];
+    "node_41" -> "node_54" [dir=back];
+    "node_24" -> "node_55" [dir=back];
+    "node_41" -> "node_55" [dir=back];
+    "node_29" -> "node_56" [dir=back];
+    "node_35" -> "node_56" [dir=back];
+    "node_42" -> "node_56" [dir=back];
+    "node_44" -> "node_56" [dir=back];
+    "node_57" -> "node_56" [dir=back];
+    "node_58" -> "node_56" [dir=back];
+    "node_59" -> "node_56" [dir=back];
+    "node_61" -> "node_56" [dir=back];
+    "node_62" -> "node_56" [dir=back];
+    "node_94" -> "node_56" [dir=back];
+    "node_95" -> "node_56" [dir=back];
+    "node_96" -> "node_56" [dir=back];
+    "node_97" -> "node_56" [dir=back];
+    "node_35" -> "node_57" [dir=back];
+    "node_36" -> "node_57" [dir=back];
+    "node_37" -> "node_57" [dir=back];
+    "node_102" -> "node_58" [dir=back];
+    "node_103" -> "node_58" [dir=back];
+    "node_104" -> "node_58" [dir=back];
+    "node_29" -> "node_58" [dir=back];
+    "node_43" -> "node_58" [dir=back];
+    "node_46" -> "node_58" [dir=back];
+    "node_56" -> "node_58" [dir=back];
+    "node_59" -> "node_58" [dir=back];
+    "node_15" -> "node_59" [dir=back];
+    "node_60" -> "node_59" [dir=back];
+    "node_1" -> "node_60" [dir=back];
+    "node_114" -> "node_60" [dir=back];
+    "node_19" -> "node_60" [dir=back];
+    "node_2" -> "node_60" [dir=back];
+    "node_52" -> "node_60" [dir=back];
+    "node_4" -> "node_61" [dir=back];
+    "node_48" -> "node_61" [dir=back];
+    "node_49" -> "node_61" [dir=back];
+    "node_5" -> "node_61" [dir=back];
+    "node_50" -> "node_61" [dir=back];
+    "node_6" -> "node_61" [dir=back];
+    "node_53" -> "node_62" [dir=back];
+    "node_54" -> "node_62" [dir=back];
+    "node_8" -> "node_62" [dir=back];
+    "node_64" -> "node_70" [dir=back];
+    "node_65" -> "node_70" [dir=back];
+    "node_67" -> "node_75" [dir=back];
+    "node_72" -> "node_79" [dir=back];
+    "node_73" -> "node_79" [dir=back];
+    "node_80" -> "node_79" [dir=back];
+    "node_85" -> "node_82" [dir=back];
+    "node_83" -> "node_84" [dir=back];
+    "node_85" -> "node_84" [dir=back];
+    "node_66" -> "node_85" [dir=back];
+    "node_89" -> "node_87" [dir=back];
+    "node_93" -> "node_87" [dir=back];
+    "node_101" -> "node_88" [dir=back];
+    "node_89" -> "node_88" [dir=back];
+    "node_103" -> "node_90" [dir=back];
+    "node_67" -> "node_90" [dir=back];
+    "node_68" -> "node_90" [dir=back];
+    "node_69" -> "node_90" [dir=back];
+    "node_81" -> "node_90" [dir=back];
+    "node_87" -> "node_90" [dir=back];
+    "node_88" -> "node_90" [dir=back];
+    "node_96" -> "node_90" [dir=back];
+    "node_77" -> "node_91" [dir=back];
+    "node_67" -> "node_92" [dir=back];
+    "node_79" -> "node_92" [dir=back];
+    "node_95" -> "node_92" [dir=back];
+    "node_93" -> "node_96" [dir=back];
+    "node_101" -> "node_97" [dir=back];
+    "node_93" -> "node_99" [dir=back];
+    "node_14" -> "node_103" [style=dotted,dir=back];
+    "node_23" -> "node_103" [style=dotted,dir=back];
+    "node_7" -> "node_103" [style=dotted,dir=back];
+    "node_14" -> "node_104" [style=dotted,dir=back];
+    "node_23" -> "node_104" [style=dotted,dir=back];
+    "node_7" -> "node_104" [style=dotted,dir=back];
+    "node_0" -> "node_108" [style=dotted,dir=back];
+    "node_105" -> "node_108" [style=dotted,dir=back];
+    "node_0" -> "node_109" [style=dotted,dir=back];
+    "node_105" -> "node_109" [style=dotted,dir=back];
+    "node_3" -> "node_109" [style=dotted,dir=back];
+    "node_0" -> "node_110" [style=dotted,dir=back];
+    "node_105" -> "node_110" [style=dotted,dir=back];
+    "node_14" -> "node_110" [style=dotted,dir=back];
+    "node_0" -> "node_111" [style=dotted,dir=back];
+    "node_105" -> "node_111" [style=dotted,dir=back];
+    "node_18" -> "node_111" [style=dotted,dir=back];
+    "node_105" -> "node_112" [style=dotted,dir=back];
+    "node_14" -> "node_112" [style=dotted,dir=back];
+    "node_3" -> "node_112" [style=dotted,dir=back];
+    "node_93" -> "node_112" [style=dotted,dir=back];
+    "node_101" -> "node_113" [style=dotted,dir=back];
+    "node_105" -> "node_113" [style=dotted,dir=back];
+    "node_14" -> "node_113" [style=dotted,dir=back];
+    "node_3" -> "node_113" [style=dotted,dir=back];
+    "node_105" -> "node_115" [style=dotted,dir=back];
+    "node_3" -> "node_115" [style=dotted,dir=back];
+    "node_11" -> "node_25" [style=dotted,dir=back];
+    "node_23" -> "node_25" [style=dotted,dir=back];
+    "node_11" -> "node_27" [style=dotted,dir=back];
+    "node_23" -> "node_27" [style=dotted,dir=back];
+    "node_7" -> "node_27" [style=dotted,dir=back];
+    "node_11" -> "node_29" [style=dotted,dir=back];
+    "node_14" -> "node_29" [style=dotted,dir=back];
+    "node_11" -> "node_30" [style=dotted,dir=back];
+    "node_18" -> "node_30" [style=dotted,dir=back];
+    "node_14" -> "node_31" [style=dotted,dir=back];
+    "node_23" -> "node_31" [style=dotted,dir=back];
+    "node_7" -> "node_31" [style=dotted,dir=back];
+    "node_93" -> "node_31" [style=dotted,dir=back];
+    "node_101" -> "node_32" [style=dotted,dir=back];
+    "node_14" -> "node_32" [style=dotted,dir=back];
+    "node_23" -> "node_32" [style=dotted,dir=back];
+    "node_7" -> "node_32" [style=dotted,dir=back];
+    "node_23" -> "node_33" [style=dotted,dir=back];
+    "node_7" -> "node_33" [style=dotted,dir=back];
+    "node_0" -> "node_42" [style=dotted,dir=back];
+    "node_3" -> "node_42" [style=dotted,dir=back];
+    "node_38" -> "node_42" [style=dotted,dir=back];
+    "node_0" -> "node_43" [style=dotted,dir=back];
+    "node_38" -> "node_43" [style=dotted,dir=back];
+    "node_11" -> "node_44" [style=dotted,dir=back];
+    "node_38" -> "node_44" [style=dotted,dir=back];
+    "node_7" -> "node_44" [style=dotted,dir=back];
+    "node_11" -> "node_46" [style=dotted,dir=back];
+    "node_38" -> "node_46" [style=dotted,dir=back];
+    "node_38" -> "node_48" [style=dotted,dir=back];
+    "node_38" -> "node_49" [style=dotted,dir=back];
+    "node_38" -> "node_50" [style=dotted,dir=back];
+    "node_38" -> "node_51" [style=dotted,dir=back];
+    "node_38" -> "node_52" [style=dotted,dir=back];
+    "node_38" -> "node_53" [style=dotted,dir=back];
+    "node_38" -> "node_54" [style=dotted,dir=back];
+    "node_38" -> "node_55" [style=dotted,dir=back];
+    "node_14" -> "node_56" [style=dotted,dir=back];
+    "node_34" -> "node_56" [style=dotted,dir=back];
+    "node_38" -> "node_56" [style=dotted,dir=back];
+    "node_93" -> "node_56" [style=dotted,dir=back];
+    "node_34" -> "node_57" [style=dotted,dir=back];
+    "node_101" -> "node_58" [style=dotted,dir=back];
+    "node_14" -> "node_58" [style=dotted,dir=back];
+    "node_34" -> "node_58" [style=dotted,dir=back];
+    "node_38" -> "node_58" [style=dotted,dir=back];
+    "node_0" -> "node_59" [style=dotted,dir=back];
+    "node_14" -> "node_59" [style=dotted,dir=back];
+    "node_38" -> "node_59" [style=dotted,dir=back];
+    "node_0" -> "node_60" [style=dotted,dir=back];
+    "node_18" -> "node_60" [style=dotted,dir=back];
+    "node_39" -> "node_60" [style=dotted,dir=back];
+    "node_3" -> "node_61" [style=dotted,dir=back];
+    "node_38" -> "node_61" [style=dotted,dir=back];
+    "node_38" -> "node_62" [style=dotted,dir=back];
+    "node_7" -> "node_62" [style=dotted,dir=back];
+    "node_63" -> "node_70" [style=dotted,dir=back];
+    "node_82" -> "node_74" [style=dotted,dir=back];
+    "node_82" -> "node_75" [style=dotted,dir=back];
+    "node_82" -> "node_76" [style=dotted,dir=back];
+    "node_82" -> "node_77" [style=dotted,dir=back];
+    "node_82" -> "node_78" [style=dotted,dir=back];
+    "node_66" -> "node_79" [style=dotted,dir=back];
+    "node_71" -> "node_79" [style=dotted,dir=back];
+    "node_82" -> "node_79" [style=dotted,dir=back];
+    "node_85" -> "node_80" [style=dotted,dir=back];
+    "node_66" -> "node_81" [style=dotted,dir=back];
+    "node_82" -> "node_81" [style=dotted,dir=back];
+    "node_82" -> "node_90" [style=dotted,dir=back];
+    "node_86" -> "node_90" [style=dotted,dir=back];
+    "node_89" -> "node_90" [style=dotted,dir=back];
+    "node_82" -> "node_91" [style=dotted,dir=back];
+    "node_89" -> "node_91" [style=dotted,dir=back];
+    "node_71" -> "node_92" [style=dotted,dir=back];
+    "node_82" -> "node_92" [style=dotted,dir=back];
+    "node_89" -> "node_92" [style=dotted,dir=back];
+    "node_93" -> "node_92" [style=dotted,dir=back];
+    "node_23" -> "node_95" [style=dotted,dir=back];
+    "node_7" -> "node_95" [style=dotted,dir=back];
+    "node_14" -> "node_96" [style=dotted,dir=back];
+    "node_23" -> "node_96" [style=dotted,dir=back];
+    "node_7" -> "node_96" [style=dotted,dir=back];
+    "node_14" -> "node_97" [style=dotted,dir=back];
+    "node_23" -> "node_97" [style=dotted,dir=back];
+    "node_7" -> "node_97" [style=dotted,dir=back];
+}
