@@ -12,7 +12,7 @@ import ChainFollower.Runner
     , rollbackTo
     )
 import Composed (ComposedInv, composedInit)
-import Control.Monad (forM_, when)
+import Control.Monad (forM_, unless, when)
 import Database.KV.Transaction
     ( Transaction
     , mapColumns
@@ -47,7 +47,7 @@ printSnapshot label StateSnapshot{snapBalances, snapFlags, snapNotes} =
         putStrLn ""
         let activeFlags =
                 [(n, f) | (n, Just f) <- snapFlags]
-        when (not $ null activeFlags) $ do
+        unless (null activeFlags) $ do
             putStr "    flags:   "
             forM_ activeFlags $ \(n, f) ->
                 putStr $
@@ -55,7 +55,7 @@ printSnapshot label StateSnapshot{snapBalances, snapFlags, snapNotes} =
             putStrLn ""
         let activeNotes =
                 [(n, v) | (n, Just v) <- snapNotes]
-        when (not $ null activeNotes) $ do
+        unless (null activeNotes) $ do
             putStr "    notes:   "
             forM_ activeNotes $ \(n, v) ->
                 putStr $

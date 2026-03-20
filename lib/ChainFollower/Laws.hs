@@ -74,7 +74,7 @@ import ChainFollower.Runner
     , processBlock
     , rollbackTo
     )
-import Control.Monad (foldM)
+import Control.Monad (foldM, foldM_)
 import Control.Monad.IO.Class (MonadIO (..))
 import Data.IORef
     ( newIORef
@@ -370,16 +370,15 @@ runCanonical h blocks =
                 (bhSentinel h)
                 Nothing
         restoring <- startRestoring (bhInit h)
-        _ <-
-            foldM
-                ( \phase (slot, block) ->
-                    runTx $
-                        processBlock
-                            (bhRollbackCol h)
-                            slot
-                            block
-                            phase
-                )
-                (InRestoration restoring)
-                blocks
+        foldM_
+            ( \phase (slot, block) ->
+                runTx $
+                    processBlock
+                        (bhRollbackCol h)
+                        slot
+                        block
+                        phase
+            )
+            (InRestoration restoring)
+            blocks
         bhSnapshot h runTx

@@ -18,7 +18,7 @@ import ChainFollower.Runner
     , rollbackTo
     )
 import Composed (ComposedInv, composedInit)
-import Control.Monad (foldM, forM_, when)
+import Control.Monad (foldM_, forM_, when)
 import Data.Function (fix)
 import Data.IORef
     ( newIORef
@@ -133,18 +133,17 @@ runCanonicalClean runTx blocks = do
     runTx $
         Rollbacks.armageddonSetup Rollbacks 0 Nothing
     restoring <- startRestoring backend
-    _ <-
-        foldM
-            ( \phase (slot, block) ->
-                runTx $
-                    processBlock
-                        Rollbacks
-                        slot
-                        block
-                        phase
-            )
-            (InRestoration restoring)
-            blocks
+    foldM_
+        ( \phase (slot, block) ->
+            runTx $
+                processBlock
+                    Rollbacks
+                    slot
+                    block
+                    phase
+        )
+        (InRestoration restoring)
+        blocks
     snapshotState runTx
 
 -- * Generators
@@ -220,7 +219,7 @@ genBlockTree nextSlot = do
             let mkShallow s = do
                     d <- chooseInt (1, rollbackWindow)
                     genBoundedTree s d
-                mkDeep s = genBlockTree s
+                mkDeep = genBlockTree
             children <- case nChildren of
                 1 -> do
                     c <- mkDeep (nextSlot + 1)
@@ -323,33 +322,32 @@ spec =
                                         resumeFollowing backend
                                     -- Follow n blocks from slotBase
                                     snapshotsRef <- newIORef []
-                                    _ <-
-                                        foldM
-                                            ( \phase slot -> do
-                                                newPhase <-
-                                                    runTx $
-                                                        processBlock
-                                                            Rollbacks
-                                                            slot
-                                                            (mkBlock slot)
-                                                            phase
-                                                snap <-
-                                                    snapshotState
-                                                        runTx
-                                                snapshots <-
-                                                    readIORef
-                                                        snapshotsRef
-                                                writeIORef
+                                    foldM_
+                                        ( \phase slot -> do
+                                            newPhase <-
+                                                runTx $
+                                                    processBlock
+                                                        Rollbacks
+                                                        slot
+                                                        (mkBlock slot)
+                                                        phase
+                                            snap <-
+                                                snapshotState
+                                                    runTx
+                                            snapshots <-
+                                                readIORef
                                                     snapshotsRef
-                                                    ( snapshots
-                                                        ++ [(slot, snap)]
-                                                    )
-                                                pure newPhase
-                                            )
-                                            (InFollowing following)
-                                            [ slotBase
-                                            .. slotBase + n - 1
-                                            ]
+                                            writeIORef
+                                                snapshotsRef
+                                                ( snapshots
+                                                    ++ [(slot, snap)]
+                                                )
+                                            pure newPhase
+                                        )
+                                        (InFollowing following)
+                                        [ slotBase
+                                        .. slotBase + n - 1
+                                        ]
                                     -- Rollback to first block
                                     let target = slotBase
                                     _ <-
