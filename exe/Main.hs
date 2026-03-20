@@ -326,9 +326,9 @@ main = do
         "  of the canonical chain."
 
     let canonicalEvents =
-            map (Forward . mkBlock) [1 .. 18]
+            map (\s -> Forward s (mkBlock s)) [1 .. 18]
                 ++ [RollBack 18]
-                ++ map (Forward . mkBlock) [19 .. 40]
+                ++ map (\s -> Forward s (mkBlock s)) [19 .. 40]
         canonicalBlocks =
             resolveCanonical canonicalEvents
 
@@ -340,8 +340,10 @@ main = do
     singlePassState <- withTempDB $ \runTx2 -> do
         r' <- startRestoring backend
         _ <-
-            foldPhaseSimple runTx2 (InRestoration r') $
-                zip [1 ..] canonicalBlocks
+            foldPhaseSimple
+                runTx2
+                (InRestoration r')
+                canonicalBlocks
         snapshotState runTx2
 
     putStrLn ""
@@ -361,16 +363,16 @@ main = do
     -- with canonical chain up to slot 25
     let canonical25 =
             resolveCanonical $
-                map (Forward . mkBlock) [1 .. 18]
+                map (\s -> Forward s (mkBlock s)) [1 .. 18]
                     ++ [RollBack 18]
-                    ++ map (Forward . mkBlock) [19 .. 25]
+                    ++ map (\s -> Forward s (mkBlock s)) [19 .. 25]
     singlePass25 <- withTempDB $ \runTx3 -> do
         r'' <- startRestoring backend
         _ <-
             foldPhaseSimple
                 runTx3
                 (InRestoration r'')
-                $ zip [1 ..] canonical25
+                canonical25
         snapshotState runTx3
 
     if stateAfterPhase5 == singlePass25
