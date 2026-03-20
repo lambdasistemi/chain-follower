@@ -3,3 +3,4 @@ result
 .llm/
 WIP.md
 cabal.project.local
+lean/.lake/
