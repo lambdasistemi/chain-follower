@@ -49,12 +49,15 @@ library
   exposed-modules:
     ChainFollower
     ChainFollower.Backend
+    ChainFollower.Rollbacks.Column
+    ChainFollower.Rollbacks.Store
+    ChainFollower.Rollbacks.Types
     ChainFollower.Runner
 
   build-depends:
     , base                                     >=4.17 && <5
-    , mts:rollbacks
     , rocksdb-kv-transactions:kv-transactions
+    , transformers                             >=0.5  && <0.7
 
   hs-source-dirs:   lib
   default-language: Haskell2010
