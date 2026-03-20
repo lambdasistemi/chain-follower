@@ -1,12 +1,15 @@
 cabal-version:   3.4
 name:            chain-follower
 version:         0.1.0.0
-synopsis:        Abstract chain follower types
+synopsis:        Abstract chain follower types with rollback support
 description:
   Generic chain-following abstractions parameterized over block,
   point, and slot types. Provides Follower, Intersector, and
   ProgressOrRewind types for building chain synchronization
   clients without coupling to any specific blockchain.
+  .
+  Includes a CPS backend interface (Restoring\/Following) with
+  phase-aware rollback support via @kv-transactions@.
 
 license:         Apache-2.0
 license-file:    LICENSE
@@ -36,13 +39,22 @@ common warnings
     LambdaCase
     NamedFieldPuns
     OverloadedStrings
+    RankNTypes
     ScopedTypeVariables
     StrictData
     TypeFamilies
 
 library
   import:           warnings
-  exposed-modules:  ChainFollower
-  build-depends:    base >=4.17 && <5
+  exposed-modules:
+    ChainFollower
+    ChainFollower.Backend
+    ChainFollower.Runner
+
+  build-depends:
+    , base                                     >=4.17 && <5
+    , mts:rollbacks
+    , rocksdb-kv-transactions:kv-transactions
+
   hs-source-dirs:   lib
   default-language: Haskell2010
