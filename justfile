@@ -33,6 +33,13 @@ build:
     #!/usr/bin/env bash
     cabal build all -O0
 
+# Generate function call graph (SVG + DOT)
+call-graph:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cabal build all -O0 --ghc-options="-fwrite-ide-info -hiedir=.hie"
+    calligraphy -i .hie -d call-graph.dot -s call-graph.svg
+
 # Full CI pipeline
 ci:
     #!/usr/bin/env bash
