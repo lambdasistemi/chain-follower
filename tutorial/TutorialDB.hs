@@ -18,9 +18,14 @@ module TutorialDB
     , StateSnapshot (..)
     , snapshotState
 
-      -- * Chain events
-    , ChainEvent (..)
-    , resolveCanonical
+      -- * Chain events (re-exported from MockChain)
+    , MC.ChainEvent (..)
+    , MC.BlockTree (..)
+    , MC.dfs
+    , MC.canonicalPath
+    , MC.resolveCanonical
+    , MC.wellFormed
+    , MC.treeSlot
 
       -- * Constants
     , rollbackWindow
@@ -28,6 +33,7 @@ module TutorialDB
 
 import Audit (AuditCols (..))
 import Balances (BalanceCols (..))
+import ChainFollower.MockChain qualified as MC
 import ChainFollower.Rollbacks.Types
     ( RollbackPoint
     )
@@ -248,28 +254,6 @@ snapshotState runTx =
         <$> queryAllBalances runTx
         <*> queryAllFlags runTx
         <*> queryAllNotes runTx
-
--- * Chain events
-
--- | A blockchain event: forward or fork.
-data ChainEvent
-    = -- | Process a new block.
-      Forward Block
-    | -- | Fork: roll back to this slot.
-      RollBack Int
-    deriving stock (Show)
-
-{- | Resolve a sequence of chain events into the
-canonical (linear) chain. Each 'RollBack' drops all
-blocks with slot > target. The result is the final
-linear sequence of blocks.
--}
-resolveCanonical :: [ChainEvent] -> [Block]
-resolveCanonical = foldl apply []
-  where
-    apply chain (Forward block) = chain ++ [block]
-    apply chain (RollBack target) =
-        filter (\b -> blockSlot b <= target) chain
 
 -- * Constants
 

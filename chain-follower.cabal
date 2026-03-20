@@ -49,6 +49,7 @@ library
   exposed-modules:
     ChainFollower
     ChainFollower.Backend
+    ChainFollower.MockChain
     ChainFollower.Rollbacks.Column
     ChainFollower.Rollbacks.Store
     ChainFollower.Rollbacks.Types

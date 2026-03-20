@@ -4,6 +4,13 @@ import ChainFollower.Backend
     ( Init (..)
     , liftInit
     )
+import ChainFollower.MockChain
+    ( BlockTree (..)
+    , ChainEvent (..)
+    , canonicalPath
+    , dfs
+    , resolveCanonical
+    )
 import ChainFollower.Rollbacks.Store qualified as Rollbacks
 import ChainFollower.Runner
     ( Phase (..)
@@ -38,11 +45,9 @@ import Test.QuickCheck
     )
 import TutorialDB
     ( AllCols (..)
-    , ChainEvent (..)
     , RunTx
     , StateSnapshot
     , mkBlock
-    , resolveCanonical
     , rollbackWindow
     , snapshotState
     , withTempDB
@@ -72,7 +77,9 @@ slotBase = 100
 
 -- | Run a sequence of chain events through the Runner.
 runChainEvents
-    :: RunTx -> [ChainEvent] -> IO StateSnapshot
+    :: RunTx
+    -> [ChainEvent Int Block]
+    -> IO StateSnapshot
 runChainEvents runTx events = do
     -- Start in following mode so all blocks have
     -- rollback support from the beginning.
@@ -86,12 +93,12 @@ runChainEvents runTx events = do
     forM_ events $ \event -> do
         phase <- readIORef phaseRef
         case event of
-            Forward block -> do
+            Forward slot block -> do
                 newPhase <-
                     runTx $
                         processBlock
                             Rollbacks
-                            (blockSlot block)
+                            slot
                             block
                             phase
                 writeIORef phaseRef newPhase
@@ -121,18 +128,18 @@ runChainEvents runTx events = do
 
 -- | Run the canonical chain cleanly via restoration.
 runCanonicalClean
-    :: RunTx -> [Block] -> IO StateSnapshot
+    :: RunTx -> [(Int, Block)] -> IO StateSnapshot
 runCanonicalClean runTx blocks = do
     runTx $
         Rollbacks.armageddonSetup Rollbacks 0 Nothing
     restoring <- startRestoring backend
     _ <-
         foldM
-            ( \phase block ->
+            ( \phase (slot, block) ->
                 runTx $
                     processBlock
                         Rollbacks
-                        (blockSlot block)
+                        slot
                         block
                         phase
             )
@@ -147,7 +154,7 @@ Slots start at 'slotBase' so all slot numbers have
 the same digit count (avoids lexicographic ordering
 issues in RocksDB key encoding).
 -}
-genChainEvents :: Gen [ChainEvent]
+genChainEvents :: Gen [ChainEvent Int Block]
 genChainEvents = do
     totalEvents <- chooseInt (10, 30)
     go slotBase 0 totalEvents []
@@ -156,14 +163,12 @@ genChainEvents = do
         :: Int
         -> Int
         -> Int
-        -> [ChainEvent]
-        -> Gen [ChainEvent]
+        -> [ChainEvent Int Block]
+        -> Gen [ChainEvent Int Block]
     go _nextSlot _tip 0 acc = pure (reverse acc)
     go nextSlot tip remaining acc
         | tip < 3 = do
-            -- Must go forward until we have >= 3 blocks
-            let block = mkBlock nextSlot
-                event = Forward block
+            let event = Forward nextSlot (mkBlock nextSlot)
             go
                 (nextSlot + 1)
                 (tip + 1)
@@ -173,7 +178,6 @@ genChainEvents = do
             choice <- chooseInt (1 :: Int, 4)
             if choice == 1 && tip > 1
                 then do
-                    -- Rollback
                     let lo =
                             max
                                 slotBase
@@ -193,13 +197,79 @@ genChainEvents = do
                         (remaining - 1)
                         (RollBack target : acc)
                 else do
-                    let block = mkBlock nextSlot
-                        event = Forward block
+                    let event = Forward nextSlot (mkBlock nextSlot)
                     go
                         (nextSlot + 1)
                         (tip + 1)
                         (remaining - 1)
                         (event : acc)
+
+{- | Generate a well-formed BlockTree.
+Non-rightmost branches have depth ≤ rollbackWindow.
+Mirrors Lean @wellFormed@.
+-}
+genBlockTree
+    :: Int -> Gen (BlockTree Int Block)
+genBlockTree nextSlot = do
+    nChildren <- chooseInt (0 :: Int, 3)
+    if nChildren == 0
+        then
+            pure $
+                Leaf nextSlot (mkBlock nextSlot)
+        else do
+            let mkShallow s = do
+                    d <- chooseInt (1, rollbackWindow)
+                    genBoundedTree s d
+                mkDeep s = genBlockTree s
+            children <- case nChildren of
+                1 -> do
+                    c <- mkDeep (nextSlot + 1)
+                    pure [c]
+                _ -> do
+                    nonRight <-
+                        mapM
+                            mkShallow
+                            [ nextSlot + 1
+                            .. nextSlot + nChildren - 1
+                            ]
+                    right <-
+                        mkDeep
+                            (nextSlot + nChildren)
+                    pure $ nonRight ++ [right]
+            pure $
+                Fork
+                    nextSlot
+                    (mkBlock nextSlot)
+                    children
+
+-- | Generate a tree with bounded depth.
+genBoundedTree
+    :: Int -> Int -> Gen (BlockTree Int Block)
+genBoundedTree nextSlot maxDepth
+    | maxDepth <= 1 =
+        pure $ Leaf nextSlot (mkBlock nextSlot)
+    | otherwise = do
+        nChildren <- chooseInt (0 :: Int, 2)
+        if nChildren == 0
+            then
+                pure $
+                    Leaf nextSlot (mkBlock nextSlot)
+            else do
+                children <-
+                    mapM
+                        ( \s ->
+                            genBoundedTree
+                                s
+                                (maxDepth - 1)
+                        )
+                        [ nextSlot + 1
+                        .. nextSlot + nChildren
+                        ]
+                pure $
+                    Fork
+                        nextSlot
+                        (mkBlock nextSlot)
+                        children
 
 -- * Properties
 
@@ -207,7 +277,26 @@ spec :: Spec
 spec =
     describe "Runner" $
         modifyMaxSuccess (const 30) $ do
-            describe "Fork resolution" $ do
+            describe "dfs_equiv_canonical (Lean theorem)" $ do
+                it "DFS walk of tree equals canonical path" $
+                    forAll (genBlockTree slotBase) $
+                        \tree ->
+                            property $ do
+                                let events = dfs tree
+                                    canon = canonicalPath tree
+                                actual <-
+                                    withTempDB $ \runTx ->
+                                        runChainEvents
+                                            runTx
+                                            events
+                                expected <-
+                                    withTempDB $ \runTx ->
+                                        runCanonicalClean
+                                            runTx
+                                            canon
+                                actual `shouldBe` expected
+
+            describe "Fork resolution (flat events)" $ do
                 it "matches canonical chain after forks" $
                     forAll genChainEvents $ \events ->
                         property $ do
