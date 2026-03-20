@@ -10,12 +10,15 @@
       "github:input-output-hk/haskell.nix/baa6a549ce876e9c44c494a12116f178f1becbe6";
     nixpkgs.follows = "haskellNix/nixpkgs-unstable";
     flake-parts.url = "github:hercules-ci/flake-parts";
+    dev-assets-mkdocs.url = "github:paolino/dev-assets?dir=mkdocs";
   };
-  outputs = inputs@{ self, nixpkgs, flake-parts, haskellNix, ... }:
+  outputs =
+    inputs@{ self, nixpkgs, flake-parts, haskellNix, dev-assets-mkdocs, ... }:
     flake-parts.lib.mkFlake { inherit inputs; } {
       systems = [ "x86_64-linux" "aarch64-darwin" ];
       perSystem = { system, ... }:
         let
+          mkdocs = dev-assets-mkdocs.packages.${system};
           pkgs = import nixpkgs {
             overlays = [ haskellNix.overlay ];
             inherit system;
@@ -33,7 +36,13 @@
                 fourmolu = indexTool;
                 hlint = indexTool;
               };
-              buildInputs = [ pkgs.just pkgs.nixfmt-classic pkgs.elan ];
+              buildInputs = [
+                pkgs.just
+                pkgs.nixfmt-classic
+                pkgs.elan
+                pkgs.mkdocs
+                mkdocs.from-nixpkgs
+              ];
             };
           };
         in {
