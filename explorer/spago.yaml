@@ -1,0 +1,32 @@
+package:
+  name: call-graph-explorer
+  dependencies:
+    - prelude
+    - effect
+    - aff
+    - console
+    - halogen
+    - argonaut
+    - argonaut-codecs
+    - arrays
+    - maybe
+    - either
+    - foldable-traversable
+    - tuples
+    - web-html
+    - web-dom
+    - strings
+    - integers
+    - foreign-object
+    - ordered-collections
+    - refs
+    - transformers
+  bundle:
+    module: Main
+    outfile: dist/index.js
+    platform: browser
+    type: app
+
+workspace:
+  packageSet:
+    registry: 72.1.0
