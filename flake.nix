@@ -37,8 +37,7 @@
             };
           };
         in {
-          packages.default =
-            project.hsPkgs.chain-follower.components.library;
+          packages.default = project.hsPkgs.chain-follower.components.library;
           devShells.default = project.shell;
         };
     };
