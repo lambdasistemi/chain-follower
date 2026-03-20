@@ -2,7 +2,7 @@ digraph calligraphy {
     node [style=filled fillcolor="#ffffffcf"];
     graph [outputorder=edgesfirst];
     subgraph cluster_module_module_0 {
-        label="Types";
+        label="tutorial/Types.hs";
         bgcolor="whitesmoke"
         subgraph cluster_node_0 {
             style=invis;
@@ -73,7 +73,7 @@ digraph calligraphy {
         }
     }
     subgraph cluster_module_module_1 {
-        label="Balances";
+        label="tutorial/Balances.hs";
         bgcolor="whitesmoke"
         subgraph cluster_node_23 {
             style=invis;
@@ -104,7 +104,7 @@ digraph calligraphy {
         node_33 [label="undoInverse",shape=ellipse,style="dashed, filled"];
     }
     subgraph cluster_module_module_2 {
-        label="Composed";
+        label="tutorial/Composed.hs";
         bgcolor="whitesmoke"
         subgraph cluster_node_34 {
             style=invis;
@@ -167,7 +167,7 @@ digraph calligraphy {
         node_62 [label="undoBalanceInv",shape=ellipse,style="dashed, filled"];
     }
     subgraph cluster_module_module_3 {
-        label="ChainFollower.Rollbacks.Types";
+        label="lib/ChainFollower/Rollbacks/Types.hs";
         bgcolor="whitesmoke"
         subgraph cluster_node_63 {
             style=invis;
@@ -193,7 +193,7 @@ digraph calligraphy {
         node_70 [label="inverseOf",shape=ellipse,style="filled"];
     }
     subgraph cluster_module_module_4 {
-        label="ChainFollower.Rollbacks.Store";
+        label="lib/ChainFollower/Rollbacks/Store.hs";
         bgcolor="whitesmoke"
         subgraph cluster_node_71 {
             style=invis;
@@ -217,7 +217,7 @@ digraph calligraphy {
         node_81 [label="storeRollbackPoint",shape=ellipse,style="filled"];
     }
     subgraph cluster_module_module_5 {
-        label="ChainFollower.Rollbacks.Column";
+        label="lib/ChainFollower/Rollbacks/Column.hs";
         bgcolor="whitesmoke"
         node_82 [label="RollbackCol",shape=octagon,style="filled"];
         subgraph cluster_node_83 {
@@ -229,7 +229,7 @@ digraph calligraphy {
         node_85 [label="RollbackKV",shape=octagon,style="filled"];
     }
     subgraph cluster_module_module_6 {
-        label="ChainFollower.Runner";
+        label="lib/ChainFollower/Runner.hs";
         bgcolor="whitesmoke"
         subgraph cluster_node_86 {
             style=invis;
@@ -245,7 +245,7 @@ digraph calligraphy {
         node_92 [label="rollbackTo",shape=ellipse,style="filled"];
     }
     subgraph cluster_module_module_7 {
-        label="ChainFollower.Backend";
+        label="lib/ChainFollower/Backend.hs";
         bgcolor="whitesmoke"
         subgraph cluster_node_93 {
             style=invis;
@@ -285,7 +285,7 @@ digraph calligraphy {
         }
     }
     subgraph cluster_module_module_8 {
-        label="Audit";
+        label="tutorial/Audit.hs";
         bgcolor="whitesmoke"
         subgraph cluster_node_105 {
             style=invis;
@@ -309,7 +309,7 @@ digraph calligraphy {
         node_115 [label="undoInverse",shape=ellipse,style="dashed, filled"];
     }
     subgraph cluster_module_module_9 {
-        label="ChainFollower";
+        label="lib/ChainFollower.hs";
         bgcolor="whitesmoke"
         subgraph cluster_node_116 {
             style=invis;
