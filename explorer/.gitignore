@@ -1,5 +1,0 @@
-.spago/
-output/
-dist/index.js
-node_modules/
-flake.lock
