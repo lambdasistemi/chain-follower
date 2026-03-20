@@ -86,4 +86,4 @@ data RollbackPoint inv meta = RollbackPoint
     , rpMeta :: Maybe meta
     -- ^ Optional per-point metadata.
     }
-    deriving stock (Eq, Show)
+    deriving stock (Eq, Show, Read)

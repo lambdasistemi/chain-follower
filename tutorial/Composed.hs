@@ -6,6 +6,9 @@ module Composed
     , composedRestoring
     , composedFollowing
 
+      -- * Initialization
+    , composedInit
+
       -- * Combined inverse
     , ComposedInv (..)
     ) where
@@ -41,6 +44,7 @@ import Balances
     )
 import ChainFollower.Backend
     ( Following (..)
+    , Init (..)
     , Restoring (..)
     )
 import Database.KV.Transaction
@@ -85,7 +89,7 @@ data ComposedInv = ComposedInv
     { balanceInvs :: [BalanceInv]
     , auditInvs :: [AuditInv]
     }
-    deriving stock (Show, Eq)
+    deriving stock (Show, Eq, Read)
 
 -- | Shorthand for unified transaction.
 type T cf op =
@@ -287,4 +291,13 @@ composedFollowing =
                     -- list, reverse to undo last-applied first.
                     mapM_ undoAuditInv (reverse auditInvs)
                     mapM_ undoBalanceInv (reverse balanceInvs)
+        }
+
+-- | Backend initialization for the composed backend.
+composedInit
+    :: Init IO (T cf op) Block ComposedInv
+composedInit =
+    Init
+        { startRestoring = pure composedRestoring
+        , resumeFollowing = pure composedFollowing
         }

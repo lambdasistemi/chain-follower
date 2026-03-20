@@ -38,6 +38,8 @@
           };
         in {
           packages.default = project.hsPkgs.chain-follower.components.library;
+          packages.tutorial =
+            project.hsPkgs.chain-follower.components.exes.chain-follower-tutorial;
           devShells.default = project.shell;
         };
     };
