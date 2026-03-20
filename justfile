@@ -38,7 +38,7 @@ call-graph:
     #!/usr/bin/env bash
     set -euo pipefail
     cabal build all -O0 --ghc-options="-fwrite-ide-info -hiedir=.hie"
-    calligraphy -i .hie --show-module-path -d call-graph.dot -s call-graph.svg
+    calligraphy -i .hie --show-module-path --show-line -d call-graph.dot -s call-graph.svg
 
 # Full CI pipeline
 ci:
