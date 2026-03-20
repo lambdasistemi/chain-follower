@@ -5,6 +5,11 @@ module ChainFollower.Backend
 
       -- * Initialization
     , Init (..)
+
+      -- * Lifting
+    , liftRestoring
+    , liftFollowing
+    , liftInit
     ) where
 
 {- |
@@ -95,18 +100,85 @@ data Following m t block inv = Following
     -}
     }
 
-{- | Backend initialization result.
+{- | Backend initialization.
 
-At startup the chain follower reads its own checkpoint
-state to determine which phase to resume. The backend
-provides the appropriate continuation.
+The chain follower decides which phase to enter based on
+its own checkpoint state. The backend provides setup
+actions for both phases in @m@, but only the chosen one
+is executed. This lets the backend run phase-specific
+initialization (replay journals, open cursors, etc.)
+without knowing which phase will be selected.
 -}
-data Init m t block inv
-    = {- | Fresh start or restoration recovery.
-      No checkpoints, no inverses, no tip state.
-      -}
-      StartRestoring
-        (Restoring m t block inv)
-    | -- | Resuming following mode from a checkpoint.
-      ResumeFollowing
-        (Following m t block inv)
+data Init m t block inv = Init
+    { startRestoring
+        :: m (Restoring m t block inv)
+    {- ^ Set up for restoration mode. Called when
+    the chain follower has no checkpoint or is
+    starting fresh. Runs in @m@ so the backend
+    can initialize internal state.
+    -}
+    , resumeFollowing
+        :: m (Following m t block inv)
+    {- ^ Set up for following mode. Called when the
+    chain follower resumes from a checkpoint near
+    the tip. Runs in @m@ so the backend can replay
+    journals, restore cursors, etc.
+    -}
+    }
+
+{- | Lift a 'Restoring' through a natural transformation
+on the transaction monad. Used to embed a backend that
+operates over its own column GADT into a larger unified
+column type via @mapColumns@.
+-}
+liftRestoring
+    :: (Functor m, Functor t)
+    => (forall a. t a -> t' a)
+    -> Restoring m t block inv
+    -> Restoring m t' block inv
+liftRestoring f Restoring{restore, toFollowing} =
+    Restoring
+        { restore = \block ->
+            f $ fmap (liftRestoring f) (restore block)
+        , toFollowing =
+            fmap (liftFollowing f) toFollowing
+        }
+
+{- | Lift a 'Following' through a natural transformation
+on the transaction monad.
+-}
+liftFollowing
+    :: (Functor m, Functor t)
+    => (forall a. t a -> t' a)
+    -> Following m t block inv
+    -> Following m t' block inv
+liftFollowing f Following{follow, toRestoring, applyInverse} =
+    Following
+        { follow = \block ->
+            f $
+                fmap
+                    ( \(inv, next) ->
+                        (inv, liftFollowing f next)
+                    )
+                    (follow block)
+        , toRestoring =
+            fmap (liftRestoring f) toRestoring
+        , applyInverse = \inv ->
+            f (applyInverse inv)
+        }
+
+{- | Lift an 'Init' through a natural transformation
+on the transaction monad.
+-}
+liftInit
+    :: (Functor m, Functor t)
+    => (forall a. t a -> t' a)
+    -> Init m t block inv
+    -> Init m t' block inv
+liftInit f Init{startRestoring, resumeFollowing} =
+    Init
+        { startRestoring =
+            fmap (liftRestoring f) startRestoring
+        , resumeFollowing =
+            fmap (liftFollowing f) resumeFollowing
+        }

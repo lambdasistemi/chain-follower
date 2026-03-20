@@ -58,7 +58,7 @@ data BalanceOp
       Credit String Int
     | -- | Debit an account.
       Debit String Int
-    deriving stock (Show, Eq)
+    deriving stock (Show, Eq, Read)
 
 -- | Balance inverse — stores the old balance to restore.
 data BalanceInv = BalanceInv
@@ -66,7 +66,7 @@ data BalanceInv = BalanceInv
     , invOldBalance :: Maybe Int
     -- ^ 'Nothing' if the account didn't exist before.
     }
-    deriving stock (Show, Eq)
+    deriving stock (Show, Eq, Read)
 
 -- * Backend B: Audit (impure detection, semantic inverse)
 
@@ -87,7 +87,7 @@ data AuditEvent
         String
         String
         -- ^ account, note
-    deriving stock (Show, Eq)
+    deriving stock (Show, Eq, Read)
 
 -- | Audit inverse — semantic undo, not syntactic.
 data AuditInv
@@ -105,4 +105,4 @@ data AuditInv
         String
         String
         -- ^ account, old note
-    deriving stock (Show, Eq)
+    deriving stock (Show, Eq, Read)
