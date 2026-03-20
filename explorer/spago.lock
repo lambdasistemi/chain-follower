@@ -6,13 +6,16 @@
         "core": {
           "dependencies": [
             "aff",
+            "aff-promise",
             "argonaut",
             "argonaut-codecs",
             "arrays",
             "console",
+            "dom-indexed",
             "effect",
             "either",
             "foldable-traversable",
+            "foreign",
             "foreign-object",
             "halogen",
             "integers",
@@ -24,6 +27,8 @@
             "transformers",
             "tuples",
             "web-dom",
+            "web-events",
+            "web-file",
             "web-html"
           ]
         },
@@ -645,6 +650,21 @@
         "tailrec",
         "transformers",
         "unsafe-coerce"
+      ]
+    },
+    "aff-promise": {
+      "type": "registry",
+      "version": "4.0.0",
+      "integrity": "sha256-Jgp3y+NWuuAmwz2V3LlWoX+AvxqfVglY77N5zTw8xnI=",
+      "dependencies": [
+        "aff",
+        "control",
+        "effect",
+        "either",
+        "exceptions",
+        "foreign",
+        "prelude",
+        "transformers"
       ]
     },
     "argonaut": {

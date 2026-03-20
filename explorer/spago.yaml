@@ -21,6 +21,11 @@ package:
     - ordered-collections
     - refs
     - transformers
+    - aff-promise
+    - web-events
+    - web-file
+    - foreign
+    - dom-indexed
   bundle:
     module: Main
     outfile: dist/index.js
