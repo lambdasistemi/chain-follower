@@ -144,7 +144,6 @@ data BackendHarness m cf col op slot block inv snapshot
     -}
     }
 
-
 {- | __Lean: @swap_inverse_restores@__
 
 For any state and any block, following the block
