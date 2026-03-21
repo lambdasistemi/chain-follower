@@ -8,7 +8,6 @@ module ChainFollower.Runner
 
       -- * Query
     , rollbackCount
-
     ) where
 
 -- \|
@@ -93,8 +92,9 @@ processBlock
     => RollbackCol col slot inv meta
     -- ^ Rollback column selector
     -> Int
-    -- ^ Stability window @k@ (keeps @k + 1@ rollback
-    --   points: @k@ for the window plus one fence post)
+    {- ^ Stability window @k@ (keeps @k + 1@ rollback
+    points: @k@ for the window plus one fence post)
+    -}
     -> slot
     -- ^ Current slot
     -> block
