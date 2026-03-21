@@ -77,6 +77,6 @@ the block tree model: all non-canonical branches have depth at most K.
 
 In practice, K determines how many rollback points the chain follower
 must retain. Points older than K slots behind the tip are *final* and
-can be pruned via `pruneOldPoints`.
+can be pruned via `pruneExcess` (called automatically by `processBlock`).
 
 See [Block Tree](block-tree.md) for how K constrains the tree structure.
