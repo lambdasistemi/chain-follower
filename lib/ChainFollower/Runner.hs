@@ -65,7 +65,8 @@ data Phase m cf col op block inv meta
 In restoration mode, the block is ingested with no
 rollback storage. In following mode, the block is
 processed and its inverse operations are stored
-atomically in the rollback column.
+atomically in the rollback column. Old points
+beyond the stability window are pruned automatically.
 
 Returns the updated phase continuation.
 -}
@@ -73,6 +74,8 @@ processBlock
     :: (Ord slot, GCompare col, Monad m)
     => RollbackCol col slot inv meta
     -- ^ Rollback column selector
+    -> Int
+    -- ^ Stability window (max rollback points to keep)
     -> slot
     -- ^ Current slot
     -> block
@@ -85,10 +88,10 @@ processBlock
         col
         op
         (Phase m cf col op block inv meta)
-processBlock _ _ block (InRestoration restoring) = do
+processBlock _ _ _ block (InRestoration restoring) = do
     next <- restore restoring block
     pure $ InRestoration next
-processBlock rollbackCol slot block (InFollowing following) =
+processBlock rollbackCol k slot block (InFollowing following) =
     do
         (inv, meta, next) <- follow following block
         Rollbacks.storeRollbackPoint
@@ -98,6 +101,7 @@ processBlock rollbackCol slot block (InFollowing following) =
                 { rpInverses = [inv]
                 , rpMeta = meta
                 }
+        _ <- Rollbacks.pruneExcess rollbackCol k
         pure $ InFollowing next
 
 {- | Roll back to the given slot.

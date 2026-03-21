@@ -99,6 +99,7 @@ runChainEvents runTx events = do
                     runTx $
                         processBlock
                             Rollbacks
+                            maxBound
                             slot
                             block
                             phase
@@ -139,6 +140,7 @@ runCanonicalClean runTx blocks = do
             runTx $
                 processBlock
                     Rollbacks
+                    maxBound
                     slot
                     block
                     phase
@@ -329,6 +331,7 @@ spec =
                                                 runTx $
                                                     processBlock
                                                         Rollbacks
+                                                        maxBound
                                                         slot
                                                         (mkBlock slot)
                                                         phase
