@@ -27,8 +27,7 @@ module ChainFollower.Rollbacks.Store
     , RollbackResult (..)
     , rollbackTo
 
-      -- * Finality (prune old points)
-    , pruneBelow
+      -- * Pruning
     , pruneExcess
 
       -- * Armageddon (full cleanup)
@@ -157,30 +156,6 @@ rollbackTo col applyInverses targetKey =
                         delete col entryKey
                     prev <- prevEntry
                     (+ 1) <$> go prev
-                | otherwise -> pure 0
-
-{- | Prune all rollback points strictly before
-the given key. Returns the number of points
-pruned.
--}
-pruneBelow
-    :: (Ord key, Monad m, GCompare t)
-    => RollbackCol t key inv meta
-    -- ^ Column selector
-    -> key
-    -- ^ Lower bound (exclusive)
-    -> Transaction m cf t op Int
-pruneBelow col k =
-    iterating col $ do
-        me <- firstEntry
-        ($ me) $ fix $ \go -> \case
-            Nothing -> pure 0
-            Just Entry{entryKey}
-                | entryKey < k -> do
-                    lift $
-                        delete col entryKey
-                    next <- nextEntry
-                    (+ 1) <$> go next
                 | otherwise -> pure 0
 
 {- | Prune oldest rollback points when count

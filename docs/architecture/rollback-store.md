@@ -99,18 +99,6 @@ graph LR
 
 Slots 7 and 9 are deleted; their inverses are applied in order 9, 7.
 
-### pruneBelow
-
-```haskell
-pruneBelow :: RollbackCol t key inv meta -> key -> Transaction m cf t op Int
-```
-
-Deletes all entries with keys strictly less than the given key. Walks forward
-from the first entry. Returns the number of pruned points.
-
-Used for finality management: once a slot is finalized, its rollback point
-(and all earlier ones) will never be needed.
-
 ### armageddonCleanup
 
 ```haskell

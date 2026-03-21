@@ -6,8 +6,6 @@ module ChainFollower.Runner
     , processBlock
     , rollbackTo
 
-      -- * Finality
-    , pruneOldPoints
     ) where
 
 -- \|
@@ -75,7 +73,8 @@ processBlock
     => RollbackCol col slot inv meta
     -- ^ Rollback column selector
     -> Int
-    -- ^ Stability window (max rollback points to keep)
+    -- ^ Stability window @k@ (keeps @k + 1@ rollback
+    --   points: @k@ for the window plus one fence post)
     -> slot
     -- ^ Current slot
     -> block
@@ -101,7 +100,7 @@ processBlock rollbackCol k slot block (InFollowing following) =
                 { rpInverses = [inv]
                 , rpMeta = meta
                 }
-        _ <- Rollbacks.pruneExcess rollbackCol k
+        _ <- Rollbacks.pruneExcess rollbackCol (k + 1)
         pure $ InFollowing next
 
 {- | Roll back to the given slot.
@@ -129,16 +128,3 @@ rollbackTo rollbackCol following =
             mapM_ (applyInverse following) rpInverses
         )
 
-{- | Prune rollback points below the finality slot.
-
-Call periodically to free storage. Points before the
-finality slot can never be rolled back to.
--}
-pruneOldPoints
-    :: (Ord slot, Monad m, GCompare col)
-    => RollbackCol col slot inv meta
-    -- ^ Rollback column selector
-    -> slot
-    -- ^ Finality slot (prune strictly below)
-    -> T m cf col op Int
-pruneOldPoints = Rollbacks.pruneBelow

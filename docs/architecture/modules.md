@@ -9,7 +9,7 @@ All library modules live under `lib/ChainFollower/`. The top-level
 |--------|---------|
 | [`ChainFollower`][m-top] | Top-level re-exports: `Follower`, `Intersector`, `ProgressOrRewind` |
 | [`ChainFollower.Backend`][m-backend] | CPS backend interface: `Restoring`, `Following`, `Init`, lifting functions |
-| [`ChainFollower.Runner`][m-runner] | State machine: `Phase`, `processBlock`, `rollbackTo`, `pruneOldPoints` |
+| [`ChainFollower.Runner`][m-runner] | State machine: `Phase`, `processBlock`, `rollbackTo` |
 | [`ChainFollower.Rollbacks.Types`][m-types] | Core types: `Operation`, `inverseOf`, `RollbackPoint` |
 | [`ChainFollower.Rollbacks.Store`][m-store] | Transaction-level rollback operations: store, query, rollback, prune, armageddon |
 | [`ChainFollower.Rollbacks.Column`][m-column] | `RollbackColumn` GADT, `RollbackKV` and `RollbackCol` type aliases |
