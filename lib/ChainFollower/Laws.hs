@@ -192,6 +192,7 @@ prop_backendIsSwap h seed (slot, block) =
                     runTx $
                         processBlock
                             (bhRollbackCol h)
+                            maxBound
                             s
                             b
                             p
@@ -336,6 +337,7 @@ runDfsWalk h events =
                     runTx $
                         processBlock
                             (bhRollbackCol h)
+                            maxBound
                             slot
                             block
                             phase
@@ -379,6 +381,7 @@ runCanonical h blocks =
                 runTx $
                     processBlock
                         (bhRollbackCol h)
+                        maxBound
                         slot
                         block
                         phase
@@ -447,6 +450,7 @@ prop_historyMatchesMetadata h blockMeta events canon =
                     runTx $
                         processBlock
                             (bhRollbackCol h)
+                            maxBound
                             slot
                             block
                             phase

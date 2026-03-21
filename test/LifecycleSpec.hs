@@ -26,6 +26,7 @@ import Test.Hspec
 import TutorialDB
     ( AllCols (..)
     , mkBlock
+    , rollbackWindow
     , snapshotState
     , withPersistentDB
     , withTempDB
@@ -66,6 +67,7 @@ spec = describe "Lifecycle" $ do
                             runTx $
                                 processBlock
                                     Rollbacks
+                                    maxBound
                                     slot
                                     (mkBlock slot)
                                     phase
@@ -86,6 +88,7 @@ spec = describe "Lifecycle" $ do
                         runTx $
                             processBlock
                                 Rollbacks
+                                rollbackWindow
                                 slot
                                 (mkBlock slot)
                                 phase
@@ -106,6 +109,7 @@ spec = describe "Lifecycle" $ do
                             runTx2 $
                                 processBlock
                                     Rollbacks
+                                    maxBound
                                     slot
                                     (mkBlock slot)
                                     phase
@@ -134,6 +138,7 @@ spec = describe "Lifecycle" $ do
                             runTx $
                                 processBlock
                                     Rollbacks
+                                    rollbackWindow
                                     (blockSlot block)
                                     block
                                     phase
@@ -153,6 +158,7 @@ spec = describe "Lifecycle" $ do
                             runTx $
                                 processBlock
                                     Rollbacks
+                                    rollbackWindow
                                     (blockSlot block)
                                     block
                                     phase
@@ -182,6 +188,7 @@ spec = describe "Lifecycle" $ do
                                     runTx $
                                         processBlock
                                             Rollbacks
+                                            rollbackWindow
                                             slot
                                             (mkBlock slot)
                                             phase
