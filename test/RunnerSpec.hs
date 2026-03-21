@@ -92,7 +92,7 @@ runChainEvents runTx events = do
     runTx $
         Rollbacks.armageddonSetup Rollbacks 0 Nothing
     following <- resumeFollowing backend
-    phaseRef <- newIORef (InFollowing following)
+    phaseRef <- newIORef (InFollowing 1 following)
 
     forM_ events $ \event -> do
         phase <- readIORef phaseRef
@@ -109,22 +109,25 @@ runChainEvents runTx events = do
                 writeIORef phaseRef newPhase
             RollBack target -> do
                 case phase of
-                    InFollowing f -> do
-                        result <-
+                    InFollowing n f -> do
+                        (result, n') <-
                             runTx $
                                 rollbackTo
                                     Rollbacks
                                     f
+                                    n
                                     target
                         case result of
                             Rollbacks.RollbackSucceeded _ ->
-                                pure ()
+                                writeIORef
+                                    phaseRef
+                                    (InFollowing n' f)
                             Rollbacks.RollbackImpossible ->
                                 error $
                                     "runChainEvents: rollback"
                                         ++ " impossible to "
                                         ++ show target
-                    InRestoration _ ->
+                    InRestoration _ _ ->
                         error $
                             "runChainEvents: rollback"
                                 ++ " in restoration"
@@ -148,7 +151,7 @@ runCanonicalClean runTx blocks = do
                     block
                     phase
         )
-        (InRestoration restoring)
+        (InRestoration 0 restoring)
         blocks
     snapshotState runTx
 
@@ -359,7 +362,7 @@ spec =
                                                 )
                                             pure newPhase
                                         )
-                                        (InFollowing following)
+                                        (InFollowing 1 following)
                                         [ slotBase
                                         .. slotBase + n - 1
                                         ]
@@ -370,6 +373,7 @@ spec =
                                             rollbackTo
                                                 Rollbacks
                                                 following
+                                                (1 + n)
                                                 target
                                     actual <- snapshotState runTx
                                     snapshots <-
