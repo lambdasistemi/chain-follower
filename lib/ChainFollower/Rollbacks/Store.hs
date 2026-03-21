@@ -29,6 +29,7 @@ module ChainFollower.Rollbacks.Store
 
       -- * Finality (prune old points)
     , pruneBelow
+    , pruneExcess
 
       -- * Armageddon (full cleanup)
     , armageddonCleanup
@@ -181,6 +182,33 @@ pruneBelow col k =
                     next <- nextEntry
                     (+ 1) <$> go next
                 | otherwise -> pure 0
+
+{- | Prune oldest rollback points when count
+exceeds @maxKeep@. Deletes from the front until
+at most @maxKeep@ entries remain. Returns the
+number of entries deleted.
+-}
+pruneExcess
+    :: (Ord key, Monad m, GCompare t)
+    => RollbackCol t key inv meta
+    -- ^ Column selector
+    -> Int
+    -- ^ Maximum entries to keep
+    -> Transaction m cf t op Int
+pruneExcess col maxKeep = do
+    count <- countPoints col
+    let excess = count - maxKeep
+    if excess <= 0
+        then pure 0
+        else iterating col $ do
+            me <- firstEntry
+            ($ (me, 0 :: Int)) $ fix $ \go -> \case
+                (Nothing, n) -> pure n
+                (_, n) | n >= excess -> pure n
+                (Just Entry{entryKey}, n) -> do
+                    lift $ delete col entryKey
+                    next <- nextEntry
+                    go (next, n + 1)
 
 {- | Delete rollback points in a batch. Returns
 'True' if more entries remain (caller should

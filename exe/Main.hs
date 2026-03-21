@@ -25,6 +25,7 @@ import TutorialDB
     , StateSnapshot (..)
     , mkBlock
     , resolveCanonical
+    , rollbackWindow
     , snapshotState
     , withTempDB
     )
@@ -436,6 +437,7 @@ foldPhase runTx = go
             runTx $
                 processBlock
                     Rollbacks
+                    rollbackWindow
                     slot
                     (mkBlock slot)
                     phase
@@ -455,7 +457,12 @@ foldPhaseSimple runTx phase ((slot, block) : rest) =
     do
         phase' <-
             runTx $
-                processBlock Rollbacks slot block phase
+                processBlock
+                    Rollbacks
+                    rollbackWindow
+                    slot
+                    block
+                    phase
         foldPhaseSimple runTx phase' rest
 
 -- | Extract Following from a phase, or error.
