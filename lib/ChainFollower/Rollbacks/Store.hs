@@ -27,7 +27,7 @@ module ChainFollower.Rollbacks.Store
     , RollbackResult (..)
     , rollbackTo
 
-      -- * Pruning
+      -- * Pruning (internal, used by Runner)
     , pruneExcess
 
       -- * Armageddon (full cleanup)
