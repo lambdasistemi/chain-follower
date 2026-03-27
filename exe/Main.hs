@@ -25,6 +25,7 @@ import TutorialDB
     , StateSnapshot (..)
     , mkBlock
     , resolveCanonical
+    , rollbackWindow
     , snapshotState
     , withTempDB
     )
@@ -112,7 +113,7 @@ main = do
             "  Rollback tip: " ++ show mTip
 
         r <- startRestoring backend
-        let phase0 = InRestoration r
+        let phase0 = InRestoration 0 r
 
         putStrLn ""
         putStrLn
@@ -145,7 +146,10 @@ main = do
                 15
                 Nothing
         f <- resumeFollowing backend
-        let phase2start = InFollowing f
+        countAtTransition <-
+            runTx $ Rollbacks.countPoints Rollbacks
+        let phase2start =
+                InFollowing countAtTransition f
 
         putStrLn ""
         putStrLn
@@ -171,10 +175,10 @@ main = do
         putStrLn
             "  applying stored inverses in reverse."
 
-        following3 <- extractFollowing phase2
-        result <-
+        (n3, following3) <- extractFollowing phase2
+        (result, _) <-
             runTx $
-                rollbackTo Rollbacks following3 18
+                rollbackTo Rollbacks following3 n3 18
         putStrLn $
             "  rollbackTo 18 => " ++ show result
 
@@ -191,10 +195,12 @@ main = do
             "  — in a real chain these would differ.)"
 
         f4 <- resumeFollowing backend
+        n4 <-
+            runTx $ Rollbacks.countPoints Rollbacks
         phase4 <-
             foldPhase
                 runTx
-                (InFollowing f4)
+                (InFollowing n4 f4)
                 [19 .. 22]
                 ( \slot ->
                     when (slot == 22) $ do
@@ -205,8 +211,6 @@ main = do
                 )
 
         _ <- extractFollowing phase4
-
-        -- ── Phase 5: Small-gap restart ──────────
         section "Phase 5: Offline Restart (Small Gap)"
         putStrLn
             "  You were at slot 22. Blockchain is now"
@@ -215,11 +219,14 @@ main = do
         putStrLn
             "  Stay in FOLLOWING mode, catch up."
 
+        -- ── Phase 5: Small-gap restart ──────────
         f5 <- resumeFollowing backend
+        n5 <-
+            runTx $ Rollbacks.countPoints Rollbacks
         phase5 <-
             foldPhase
                 runTx
-                (InFollowing f5)
+                (InFollowing n5 f5)
                 [23 .. 25]
                 ( \slot ->
                     when (slot == 25) $ do
@@ -274,7 +281,7 @@ main = do
         _ <-
             foldPhase
                 runTx
-                (InRestoration r6)
+                (InRestoration 0 r6)
                 [1 .. 35]
                 ( \slot ->
                     when
@@ -299,12 +306,14 @@ main = do
                 35
                 Nothing
         f6 <- resumeFollowing backend
+        n6 <-
+            runTx $ Rollbacks.countPoints Rollbacks
 
         putStrLn "  Following blocks 36..40:"
         phase6final <-
             foldPhase
                 runTx
-                (InFollowing f6)
+                (InFollowing n6 f6)
                 [36 .. 40]
                 ( \slot ->
                     when (slot == 40) $ do
@@ -343,7 +352,7 @@ main = do
         _ <-
             foldPhaseSimple
                 runTx2
-                (InRestoration r')
+                (InRestoration 0 r')
                 canonicalBlocks
         snapshotState runTx2
 
@@ -372,7 +381,7 @@ main = do
         _ <-
             foldPhaseSimple
                 runTx3
-                (InRestoration r'')
+                (InRestoration 0 r'')
                 canonical25
         snapshotState runTx3
 
@@ -436,6 +445,7 @@ foldPhase runTx = go
             runTx $
                 processBlock
                     Rollbacks
+                    rollbackWindow
                     slot
                     (mkBlock slot)
                     phase
@@ -455,11 +465,16 @@ foldPhaseSimple runTx phase ((slot, block) : rest) =
     do
         phase' <-
             runTx $
-                processBlock Rollbacks slot block phase
+                processBlock
+                    Rollbacks
+                    rollbackWindow
+                    slot
+                    block
+                    phase
         foldPhaseSimple runTx phase' rest
 
--- | Extract Following from a phase, or error.
-extractFollowing :: TutPhase -> IO TutFollowing
-extractFollowing (InFollowing f) = pure f
-extractFollowing (InRestoration _) =
+-- | Extract Following and count from a phase, or error.
+extractFollowing :: TutPhase -> IO (Int, TutFollowing)
+extractFollowing (InFollowing n f) = pure (n, f)
+extractFollowing (InRestoration _ _) =
     error "extractFollowing: still in restoration"

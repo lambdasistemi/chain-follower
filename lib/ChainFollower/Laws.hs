@@ -192,17 +192,18 @@ prop_backendIsSwap h seed (slot, block) =
                     runTx $
                         processBlock
                             (bhRollbackCol h)
+                            maxBound
                             s
                             b
                             p
                 )
-                (InFollowing following)
+                (InFollowing 1 following)
                 seed
         -- Snapshot before
         before <- bhSnapshot h runTx
         -- Follow one block
         case phase of
-            InFollowing f -> do
+            InFollowing _ f -> do
                 (inv, meta, f') <-
                     runTx $ follow f block
                 -- Store the rollback point
@@ -237,7 +238,7 @@ prop_backendIsSwap h seed (slot, block) =
                                     ++ show before
                                     ++ "\n  after:  "
                                     ++ show after
-            InRestoration _ ->
+            InRestoration _ _ ->
                 pure $
                     Just "unexpected restoration phase"
 
@@ -329,13 +330,15 @@ runDfsWalk h events =
                 (bhSentinel h)
                 Nothing
         following <- resumeFollowing (bhInit h)
-        phaseRef <- liftIO $ newIORef (InFollowing following)
+        phaseRef <-
+            liftIO $ newIORef (InFollowing 1 following)
         let processEvent (Forward slot block) = do
                 phase <- liftIO $ readIORef phaseRef
                 phase' <-
                     runTx $
                         processBlock
                             (bhRollbackCol h)
+                            maxBound
                             slot
                             block
                             phase
@@ -343,15 +346,19 @@ runDfsWalk h events =
             processEvent (RollBack target) = do
                 phase <- liftIO $ readIORef phaseRef
                 case phase of
-                    InFollowing f -> do
-                        _ <-
+                    InFollowing n f -> do
+                        (_, n') <-
                             runTx $
                                 rollbackTo
                                     (bhRollbackCol h)
                                     f
+                                    n
                                     target
-                        pure ()
-                    InRestoration _ ->
+                        liftIO $
+                            writeIORef
+                                phaseRef
+                                (InFollowing n' f)
+                    InRestoration _ _ ->
                         error
                             "runDfsWalk: rollback in\
                             \ restoration"
@@ -379,11 +386,12 @@ runCanonical h blocks =
                 runTx $
                     processBlock
                         (bhRollbackCol h)
+                        maxBound
                         slot
                         block
                         phase
             )
-            (InRestoration restoring)
+            (InRestoration 0 restoring)
             blocks
         bhSnapshot h runTx
 
@@ -440,13 +448,15 @@ prop_historyMatchesMetadata h blockMeta events canon =
                 (bhSentinel h)
                 Nothing
         following <- resumeFollowing (bhInit h)
-        phaseRef <- liftIO $ newIORef (InFollowing following)
+        phaseRef <-
+            liftIO $ newIORef (InFollowing 1 following)
         let processEvent (Forward slot block) = do
                 phase <- liftIO $ readIORef phaseRef
                 phase' <-
                     runTx $
                         processBlock
                             (bhRollbackCol h)
+                            maxBound
                             slot
                             block
                             phase
@@ -454,15 +464,19 @@ prop_historyMatchesMetadata h blockMeta events canon =
             processEvent (RollBack target) = do
                 phase <- liftIO $ readIORef phaseRef
                 case phase of
-                    InFollowing f -> do
-                        _ <-
+                    InFollowing n f -> do
+                        (_, n') <-
                             runTx $
                                 rollbackTo
                                     (bhRollbackCol h)
                                     f
+                                    n
                                     target
-                        pure ()
-                    InRestoration _ ->
+                        liftIO $
+                            writeIORef
+                                phaseRef
+                                (InFollowing n' f)
+                    InRestoration _ _ ->
                         error
                             "prop_historyMatchesMetadata:\
                             \ rollback in restoration"

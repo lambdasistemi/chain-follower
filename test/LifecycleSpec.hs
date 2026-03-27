@@ -26,6 +26,7 @@ import Test.Hspec
 import TutorialDB
     ( AllCols (..)
     , mkBlock
+    , rollbackWindow
     , snapshotState
     , withPersistentDB
     , withTempDB
@@ -66,11 +67,12 @@ spec = describe "Lifecycle" $ do
                             runTx $
                                 processBlock
                                     Rollbacks
+                                    maxBound
                                     slot
                                     (mkBlock slot)
                                     phase
                         )
-                        (InRestoration restoring)
+                        (InRestoration 0 restoring)
                         [1 .. 10]
                 -- Transition to following
                 let currentSlot = 10
@@ -86,11 +88,12 @@ spec = describe "Lifecycle" $ do
                         runTx $
                             processBlock
                                 Rollbacks
+                                rollbackWindow
                                 slot
                                 (mkBlock slot)
                                 phase
                     )
-                    (InFollowing following)
+                    (InFollowing 1 following)
                     [11 .. 15]
                 -- Verify state matches restoring all 15
                 actual <- snapshotState runTx
@@ -106,11 +109,12 @@ spec = describe "Lifecycle" $ do
                             runTx2 $
                                 processBlock
                                     Rollbacks
+                                    maxBound
                                     slot
                                     (mkBlock slot)
                                     phase
                         )
-                        (InRestoration restoring2)
+                        (InRestoration 0 restoring2)
                         [1 .. 15]
                     snapshotState runTx2
                 actual `shouldBe` expected
@@ -134,11 +138,12 @@ spec = describe "Lifecycle" $ do
                             runTx $
                                 processBlock
                                     Rollbacks
+                                    rollbackWindow
                                     (blockSlot block)
                                     block
                                     phase
                         )
-                        (InRestoration restoring)
+                        (InRestoration 0 restoring)
                         blocks
                     snapshotState runTx
                 stateB <- withTempDB $ \runTx -> do
@@ -153,11 +158,12 @@ spec = describe "Lifecycle" $ do
                             runTx $
                                 processBlock
                                     Rollbacks
+                                    rollbackWindow
                                     (blockSlot block)
                                     block
                                     phase
                         )
-                        (InFollowing following)
+                        (InFollowing 1 following)
                         blocks
                     snapshotState runTx
                 stateA `shouldBe` stateB
@@ -182,11 +188,12 @@ spec = describe "Lifecycle" $ do
                                     runTx $
                                         processBlock
                                             Rollbacks
+                                            rollbackWindow
                                             slot
                                             (mkBlock slot)
                                             phase
                                 )
-                                (InFollowing following)
+                                (InFollowing 1 following)
                                 [1 .. 5]
                             snapshotState runTx
                     -- Session 2: reopen and verify

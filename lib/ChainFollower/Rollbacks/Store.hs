@@ -27,8 +27,8 @@ module ChainFollower.Rollbacks.Store
     , RollbackResult (..)
     , rollbackTo
 
-      -- * Finality (prune old points)
-    , pruneBelow
+      -- * Pruning (internal, used by Runner)
+    , pruneExcess
 
       -- * Armageddon (full cleanup)
     , armageddonCleanup
@@ -158,29 +158,38 @@ rollbackTo col applyInverses targetKey =
                     (+ 1) <$> go prev
                 | otherwise -> pure 0
 
-{- | Prune all rollback points strictly before
-the given key. Returns the number of points
-pruned.
+{- | Prune oldest rollback points when the known
+count exceeds @maxKeep@. Deletes from the front
+until at most @maxKeep@ entries remain. Returns
+the number of entries deleted.
+
+The caller must supply the current count (maintained
+in the 'Phase' continuation). This avoids scanning
+the column on every block.
 -}
-pruneBelow
+pruneExcess
     :: (Ord key, Monad m, GCompare t)
     => RollbackCol t key inv meta
     -- ^ Column selector
-    -> key
-    -- ^ Lower bound (exclusive)
+    -> Int
+    -- ^ Current count of rollback points
+    -> Int
+    -- ^ Maximum entries to keep
     -> Transaction m cf t op Int
-pruneBelow col k =
-    iterating col $ do
-        me <- firstEntry
-        ($ me) $ fix $ \go -> \case
-            Nothing -> pure 0
-            Just Entry{entryKey}
-                | entryKey < k -> do
-                    lift $
-                        delete col entryKey
-                    next <- nextEntry
-                    (+ 1) <$> go next
-                | otherwise -> pure 0
+pruneExcess col count maxKeep =
+    let excess = count - maxKeep
+    in  if excess <= 0
+            then pure 0
+            else iterating col $ do
+                me <- firstEntry
+                ($ (me, 0 :: Int)) $
+                    fix $ \go -> \case
+                        (Nothing, n) -> pure n
+                        (_, n) | n >= excess -> pure n
+                        (Just Entry{entryKey}, n) -> do
+                            lift $ delete col entryKey
+                            next <- nextEntry
+                            go (next, n + 1)
 
 {- | Delete rollback points in a batch. Returns
 'True' if more entries remain (caller should

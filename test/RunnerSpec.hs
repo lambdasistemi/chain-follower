@@ -15,6 +15,7 @@ import ChainFollower.Rollbacks.Store qualified as Rollbacks
 import ChainFollower.Runner
     ( Phase (..)
     , processBlock
+    , rollbackCount
     , rollbackTo
     )
 import Composed (ComposedInv, composedInit)
@@ -35,6 +36,7 @@ import Test.Hspec
     , describe
     , it
     , shouldBe
+    , shouldSatisfy
     )
 import Test.Hspec.QuickCheck (modifyMaxSuccess)
 import Test.QuickCheck
@@ -92,7 +94,7 @@ runChainEvents runTx events = do
     runTx $
         Rollbacks.armageddonSetup Rollbacks 0 Nothing
     following <- resumeFollowing backend
-    phaseRef <- newIORef (InFollowing following)
+    phaseRef <- newIORef (InFollowing 1 following)
 
     forM_ events $ \event -> do
         phase <- readIORef phaseRef
@@ -102,28 +104,32 @@ runChainEvents runTx events = do
                     runTx $
                         processBlock
                             Rollbacks
+                            maxBound
                             slot
                             block
                             phase
                 writeIORef phaseRef newPhase
             RollBack target -> do
                 case phase of
-                    InFollowing f -> do
-                        result <-
+                    InFollowing n f -> do
+                        (result, n') <-
                             runTx $
                                 rollbackTo
                                     Rollbacks
                                     f
+                                    n
                                     target
                         case result of
                             Rollbacks.RollbackSucceeded _ ->
-                                pure ()
+                                writeIORef
+                                    phaseRef
+                                    (InFollowing n' f)
                             Rollbacks.RollbackImpossible ->
                                 error $
                                     "runChainEvents: rollback"
                                         ++ " impossible to "
                                         ++ show target
-                    InRestoration _ ->
+                    InRestoration _ _ ->
                         error $
                             "runChainEvents: rollback"
                                 ++ " in restoration"
@@ -142,13 +148,92 @@ runCanonicalClean runTx blocks = do
             runTx $
                 processBlock
                     Rollbacks
+                    maxBound
                     slot
                     block
                     phase
         )
-        (InRestoration restoring)
+        (InRestoration 0 restoring)
         blocks
     snapshotState runTx
+
+{- | Run chain events with pruning enabled.
+Uses @rollbackWindow@ as the stability window,
+so processBlock auto-prunes. After each event,
+verifies the tracked count matches the actual
+DB count. Returns (snapshot, finalCount, maxSeen).
+-}
+runChainEventsWithPruning
+    :: RunTx
+    -> [ChainEvent Int Block]
+    -> IO (StateSnapshot, Int, Int)
+runChainEventsWithPruning runTx events = do
+    runTx $
+        Rollbacks.armageddonSetup Rollbacks 0 Nothing
+    following <- resumeFollowing backend
+    phaseRef <- newIORef (InFollowing 1 following)
+    maxSeenRef <- newIORef 1
+
+    forM_ events $ \event -> do
+        phase <- readIORef phaseRef
+        case event of
+            Forward slot block -> do
+                newPhase <-
+                    runTx $
+                        processBlock
+                            Rollbacks
+                            rollbackWindow
+                            slot
+                            block
+                            phase
+                writeIORef phaseRef newPhase
+                -- Verify count consistency
+                let tracked = rollbackCount newPhase
+                actual <-
+                    runTx $
+                        Rollbacks.countPoints Rollbacks
+                tracked `shouldBe` actual
+                -- Track max
+                maxSeen <- readIORef maxSeenRef
+                writeIORef
+                    maxSeenRef
+                    (max maxSeen tracked)
+            RollBack target -> do
+                case phase of
+                    InFollowing n f -> do
+                        (result, n') <-
+                            runTx $
+                                rollbackTo
+                                    Rollbacks
+                                    f
+                                    n
+                                    target
+                        case result of
+                            Rollbacks.RollbackSucceeded _ ->
+                                writeIORef
+                                    phaseRef
+                                    (InFollowing n' f)
+                            Rollbacks.RollbackImpossible ->
+                                error $
+                                    "runChainEventsWithPruning:"
+                                        ++ " rollback impossible"
+                                        ++ " to "
+                                        ++ show target
+                        -- Verify count consistency
+                        actual <-
+                            runTx $
+                                Rollbacks.countPoints
+                                    Rollbacks
+                        n' `shouldBe` actual
+                    InRestoration _ _ ->
+                        error $
+                            "runChainEventsWithPruning:"
+                                ++ " rollback in restoration"
+
+    finalPhase <- readIORef phaseRef
+    snap <- snapshotState runTx
+    maxSeen <- readIORef maxSeenRef
+    pure (snap, rollbackCount finalPhase, maxSeen)
 
 -- * Random block generators
 
@@ -340,6 +425,7 @@ spec =
                                                 runTx $
                                                     processBlock
                                                         Rollbacks
+                                                        maxBound
                                                         slot
                                                         (mkBlock slot)
                                                         phase
@@ -356,7 +442,7 @@ spec =
                                                 )
                                             pure newPhase
                                         )
-                                        (InFollowing following)
+                                        (InFollowing 1 following)
                                         [ slotBase
                                         .. slotBase + n - 1
                                         ]
@@ -367,6 +453,7 @@ spec =
                                             rollbackTo
                                                 Rollbacks
                                                 following
+                                                (1 + n)
                                                 target
                                     actual <- snapshotState runTx
                                     snapshots <-
@@ -425,3 +512,53 @@ spec =
                             expected <- withTempDB $ \runTx ->
                                 runCanonicalClean runTx canonical
                             actual `shouldBe` expected
+
+            describe "Pruning (Lean: partial_rollback_restores)" $ do
+                it "pruning preserves canonical equivalence" $
+                    forAll (genBlockTree slotBase) $
+                        \tree ->
+                            property $ do
+                                let events = dfs tree
+                                    canon = canonicalPath tree
+                                (actual, _, _) <-
+                                    withTempDB $ \runTx ->
+                                        runChainEventsWithPruning
+                                            runTx
+                                            events
+                                expected <-
+                                    withTempDB $ \runTx ->
+                                        runCanonicalClean
+                                            runTx
+                                            canon
+                                actual `shouldBe` expected
+
+                it "count never exceeds k+2" $
+                    forAll (genBlockTree slotBase) $
+                        \tree ->
+                            property $ do
+                                (_, _, maxSeen) <-
+                                    withTempDB $ \runTx ->
+                                        runChainEventsWithPruning
+                                            runTx
+                                            (dfs tree)
+                                maxSeen
+                                    `shouldSatisfy` ( <=
+                                                        rollbackWindow
+                                                            + 2
+                                                    )
+
+                it "count matches DB after all events" $
+                    forAll (genBlockTree slotBase) $
+                        \tree ->
+                            property $
+                                withTempDB $ \runTx -> do
+                                    (_, finalCount, _) <-
+                                        runChainEventsWithPruning
+                                            runTx
+                                            (dfs tree)
+                                    actual <-
+                                        runTx $
+                                            Rollbacks.countPoints
+                                                Rollbacks
+                                    finalCount
+                                        `shouldBe` actual

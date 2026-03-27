@@ -90,18 +90,3 @@ kept.
 Returns `RollbackSucceeded n` (number of points deleted) or
 `RollbackImpossible` if the target slot was not found.
 
-## pruneOldPoints
-
-```haskell
-pruneOldPoints
-    :: (Ord slot, Monad m, GCompare col)
-    => RollbackCol col slot inv ()
-    -> slot
-    -> T m cf col op Int
-```
-
-Prunes rollback points strictly below the finality slot. Points before finality
-can never be rolled back to, so their storage can be reclaimed.
-
-Call this periodically as the finality window advances. Returns the number of
-points pruned.
