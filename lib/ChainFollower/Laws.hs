@@ -49,6 +49,7 @@ module ChainFollower.Laws
 import ChainFollower.Backend
     ( Following (..)
     , Init (..)
+    , Restoring (..)
     )
 import ChainFollower.MockChain
     ( BlockTree (..)
@@ -196,10 +197,17 @@ prop_backendIsSwap h seed (slot, block) =
                 )
                 (InRestoration restoring)
                 seed
+        -- Ensure we're in following mode
+        phase' <- case phase of
+            InRestoration r -> do
+                f <- toFollowing r
+                n <- runTx $ Rollbacks.countPoints (bhRollbackCol h)
+                pure $ InFollowing n f
+            _ -> pure phase
         -- Snapshot before
         before <- bhSnapshot h runTx
         -- Follow one block
-        case phase of
+        case phase' of
             InFollowing _ f -> do
                 (inv, meta, f') <-
                     runTx $ follow f block
