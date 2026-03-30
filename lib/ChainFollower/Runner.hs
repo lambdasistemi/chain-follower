@@ -25,9 +25,11 @@ module ChainFollower.Runner
 -- operations that are stored atomically in the same
 -- transaction as the backend's mutations.
 --
--- The chain follower decides phase transitions based on
--- external signals (proximity to tip). The backend always
--- offers both options via its CPS continuations.
+-- The Runner transitions from restoration to following
+-- when the caller signals @atTip = True@. The transition
+-- calls 'toFollowing' on the backend (which may replay
+-- journals) and enters following mode with fresh rollback
+-- state.
 
 import ChainFollower.Backend
     ( Following (..)
@@ -53,16 +55,14 @@ type T m cf col op =
 
 Each constructor carries a rollback point count,
 maintained in sync with the database. Initialized
-via 'countPoints' at startup, then updated by
-'processBlock' and 'rollbackTo'.
+at 0 on fresh start, then updated by 'processBlock'
+and 'rollbackTo'.
 -}
 data Phase m cf col op block inv meta
     = {- | Restoration: bulk ingestion, no rollback
       support.
       -}
       InRestoration
-        !Int
-        -- ^ Rollback point count
         (Restoring m (T m cf col op) block inv meta)
     | {- | Following: near tip, rollback support
       active.
@@ -73,23 +73,33 @@ data Phase m cf col op block inv meta
         (Following m (T m cf col op) block inv meta)
 
 -- | Current number of rollback points.
-rollbackCount :: Phase m cf col op block inv meta -> Int
-rollbackCount (InRestoration n _) = n
+rollbackCount
+    :: Phase m cf col op block inv meta -> Int
+rollbackCount (InRestoration _) = 0
 rollbackCount (InFollowing n _) = n
 
 {- | Process a block in the current phase.
 
-In restoration mode, the block is ingested with no
-rollback storage. In following mode, the block is
-processed and its inverse operations are stored
-atomically in the rollback column. Old points
-beyond the stability window are pruned automatically.
+Takes an @atTip@ signal and a transaction runner.
+Returns in @m@ (not @t@) because the restoration →
+following transition calls 'toFollowing' which runs
+in @m@ (e.g. journal replay).
 
-Returns the updated phase continuation.
+- @InRestoration@ + @atTip = False@: ingest block
+  in transaction, stay in restoration.
+- @InRestoration@ + @atTip = True@: ingest block
+  in transaction, then call 'toFollowing' in @m@,
+  enter following with 0 rollback points.
+- @InFollowing@: process block in transaction with
+  rollback point storage and pruning.
 -}
 processBlock
     :: (Ord slot, GCompare col, Monad m)
-    => RollbackCol col slot inv meta
+    => Bool
+    -- ^ At tip: trigger transition if restoring
+    -> (forall a. T m cf col op a -> m a)
+    -- ^ Transaction runner
+    -> RollbackCol col slot inv meta
     -- ^ Rollback column selector
     -> Int
     {- ^ Stability window @k@ (keeps @k + 1@ rollback
@@ -101,29 +111,34 @@ processBlock
     -- ^ Block to process
     -> Phase m cf col op block inv meta
     -- ^ Current phase
-    -> T
-        m
-        cf
-        col
-        op
-        (Phase m cf col op block inv meta)
-processBlock _ _ _ block (InRestoration n restoring) = do
-    next <- restore restoring block
-    pure $ InRestoration n next
-processBlock rollbackCol k slot block (InFollowing n following) =
-    do
-        (inv, meta, next) <- follow following block
-        Rollbacks.storeRollbackPoint
-            rollbackCol
-            slot
-            RollbackPoint
-                { rpInverses = [inv]
-                , rpMeta = meta
-                }
-        let n' = n + 1
-        pruned <-
-            Rollbacks.pruneExcess rollbackCol n' (k + 1)
-        pure $ InFollowing (n' - pruned) next
+    -> m (Phase m cf col op block inv meta)
+processBlock atTip runTx _ _ _ block
+    (InRestoration restoring) = do
+        next <- runTx $ restore restoring block
+        if atTip
+            then do
+                following <- toFollowing next
+                pure $ InFollowing 0 following
+            else
+                pure $ InRestoration next
+processBlock _ runTx rollbackCol k slot block
+    (InFollowing n following) =
+        runTx $ do
+            (inv, meta, next) <- follow following block
+            Rollbacks.storeRollbackPoint
+                rollbackCol
+                slot
+                RollbackPoint
+                    { rpInverses = [inv]
+                    , rpMeta = meta
+                    }
+            let n' = n + 1
+            pruned <-
+                Rollbacks.pruneExcess
+                    rollbackCol
+                    n'
+                    (k + 1)
+            pure $ InFollowing (n' - pruned) next
 
 {- | Roll back to the given slot.
 

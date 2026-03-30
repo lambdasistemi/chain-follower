@@ -108,27 +108,21 @@ data Following m t block inv meta = Following
 
 {- | Backend initialization.
 
-The chain follower decides which phase to enter based on
-its own checkpoint state. The backend provides setup
-actions for both phases in @m@, but only the chosen one
-is executed. This lets the backend run phase-specific
-initialization (replay journals, open cursors, etc.)
-without knowing which phase will be selected.
+The Runner always starts in restoration mode via 'start'.
+The backend sets up internal state (crash recovery,
+journal initialization, etc.) and returns a 'Restoring'
+continuation.
+
+The transition to following happens later, when the
+Runner calls 'toFollowing' on the 'Restoring' record
+(triggered by the @atTip@ signal in 'processBlock').
 -}
-data Init m t block inv meta = Init
-    { startRestoring
+newtype Init m t block inv meta = Init
+    { start
         :: m (Restoring m t block inv meta)
-    {- ^ Set up for restoration mode. Called when
-    the chain follower has no checkpoint or is
-    starting fresh. Runs in @m@ so the backend
-    can initialize internal state.
-    -}
-    , resumeFollowing
-        :: m (Following m t block inv meta)
-    {- ^ Set up for following mode. Called when the
-    chain follower resumes from a checkpoint near
-    the tip. Runs in @m@ so the backend can replay
-    journals, restore cursors, etc.
+    {- ^ Set up for restoration mode. Runs in @m@
+    so the backend can perform crash recovery,
+    initialize journals, etc.
     -}
     }
 
@@ -181,10 +175,8 @@ liftInit
     => (forall a. t a -> t' a)
     -> Init m t block inv meta
     -> Init m t' block inv meta
-liftInit f Init{startRestoring, resumeFollowing} =
+liftInit f Init{start} =
     Init
-        { startRestoring =
-            fmap (liftRestoring f) startRestoring
-        , resumeFollowing =
-            fmap (liftFollowing f) resumeFollowing
+        { start =
+            fmap (liftRestoring f) start
         }
