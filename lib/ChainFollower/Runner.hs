@@ -112,14 +112,23 @@ processBlock
     -> Phase m cf col op block inv meta
     -- ^ Current phase
     -> m (Phase m cf col op block inv meta)
-processBlock atTip runTx _ _ _ block
-    (InRestoration restoring) = do
-        next <- runTx $ restore restoring block
+processBlock atTip runTx rollbackCol k slot block
+    (InRestoration restoring) =
         if atTip
             then do
-                following <- toFollowing next
-                pure $ InFollowing 0 following
-            else
+                -- Transition first, then process via follow
+                following <- toFollowing restoring
+                n <- runTx $ Rollbacks.countPoints rollbackCol
+                processBlock
+                    atTip
+                    runTx
+                    rollbackCol
+                    k
+                    slot
+                    block
+                    (InFollowing n following)
+            else do
+                next <- runTx $ restore restoring block
                 pure $ InRestoration next
 processBlock _ runTx rollbackCol k slot block
     (InFollowing n following) =
