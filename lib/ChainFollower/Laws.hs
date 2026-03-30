@@ -28,30 +28,23 @@ module ChainFollower.Laws
 --
 -- Any backend that satisfies 'prop_backendIsSwap' is
 -- guaranteed correct rollback behavior. The chain source
--- must satisfy 'prop_treeWellFormed'. If both hold,
--- 'prop_dfsEquivCanonical' follows.
+-- properties ('prop_treeWellFormed', 'prop_dfsEquivCanonical')
+-- verify that fork handling is correct.
 --
--- __Usage:__ instantiate 'BackendHarness' with your types,
--- then run the three properties in your test suite.
+-- ## Lean correspondence
 --
--- @
--- harness :: BackendHarness IO Block Snapshot
--- harness = BackendHarness
---     { bhInit = myInit
---     , bhSnapshot = mySnapshot
---     , bhRunTx = \\action -> withMyDB action
---     , bhGenBlock = myBlockGen
---     , bhGenSlot = chooseInt (100, 999)
---     , bhRollbackCol = MyRollbacks
---     , bhStabilityWindow = 5
---     }
---
--- spec :: Spec
--- spec = do
---     prop_backendIsSwap harness
---     prop_treeWellFormed harness
---     prop_dfsEquivCanonical harness
--- @
+-- +-----------------------------------+-------------------------------------------+
+-- | Lean theorem                      | Haskell property                          |
+-- +===================================+===========================================+
+-- | @swap_inverse_restores@           | 'prop_backendIsSwap'                      |
+-- +-----------------------------------+-------------------------------------------+
+-- | @wellFormed@ + @slotsOrdered@     | 'prop_treeWellFormed'                     |
+-- +-----------------------------------+-------------------------------------------+
+-- | @dfs_equiv_canonical@             | 'prop_dfsEquivCanonical'                  |
+-- +-----------------------------------+-------------------------------------------+
+-- | @transition_transparency@ (Phase) | 'prop_dfsEquivCanonical' (restoration     |
+-- |                                   | start + immediate transition)             |
+-- +-----------------------------------+-------------------------------------------+
 
 import ChainFollower.Backend
     ( Following (..)
@@ -71,6 +64,7 @@ import ChainFollower.Rollbacks.Column
 import ChainFollower.Rollbacks.Store qualified as Rollbacks
 import ChainFollower.Rollbacks.Types
     ( RollbackPoint (..)
+    , rpMeta
     )
 import ChainFollower.Runner
     ( Phase (..)
@@ -161,7 +155,8 @@ Tests this by:
 3. Following one more block
 4. Applying the inverse
 5. Snapshotting again
-6. Asserting equality
+
+The snapshots must be equal.
 -}
 prop_backendIsSwap
     :: ( MonadIO m
@@ -179,25 +174,27 @@ prop_backendIsSwap
     -- ^ 'Nothing' if passed, 'Just' error if failed.
 prop_backendIsSwap h seed (slot, block) =
     bhWithFreshDB h $ \runTx -> do
-        -- Setup: sentinel + follow seed blocks
+        -- Setup: sentinel + start in restoration,
+        -- immediately transition to following
         runTx $
             Rollbacks.armageddonSetup
                 (bhRollbackCol h)
                 (bhSentinel h)
                 Nothing
-        following <- resumeFollowing (bhInit h)
+        restoring <- start (bhInit h)
         phase <-
             foldM
                 ( \p (s, b) ->
-                    runTx $
-                        processBlock
-                            (bhRollbackCol h)
-                            maxBound
-                            s
-                            b
-                            p
+                    processBlock
+                        True
+                        runTx
+                        (bhRollbackCol h)
+                        maxBound
+                        s
+                        b
+                        p
                 )
-                (InFollowing 1 following)
+                (InRestoration restoring)
                 seed
         -- Snapshot before
         before <- bhSnapshot h runTx
@@ -238,7 +235,7 @@ prop_backendIsSwap h seed (slot, block) =
                                     ++ show before
                                     ++ "\n  after:  "
                                     ++ show after
-            InRestoration _ _ ->
+            InRestoration _ ->
                 pure $
                     Just "unexpected restoration phase"
 
@@ -257,28 +254,17 @@ prop_treeWellFormed
     => BackendHarness m cf col op slot block inv meta snapshot
     -> BlockTree slot block
     -> Maybe String
-prop_treeWellFormed h tree =
-    let k = bhStabilityWindow h
-    in  if not (wellFormed k tree)
-            then
-                Just $
-                    "wellFormed "
-                        ++ show k
-                        ++ " failed"
-            else
-                if not (slotsOrdered tree)
-                    then Just "slotsOrdered failed"
-                    else Nothing
-
-{- | Check that parent slots are strictly less than
-child slots (mirrors Lean @slotsOrdered@).
--}
-slotsOrdered
-    :: (Ord slot) => BlockTree slot block -> Bool
-slotsOrdered (Leaf _ _) = True
-slotsOrdered (Fork s _ children) =
-    all (\c -> s < treeSlot c) children
-        && all slotsOrdered children
+prop_treeWellFormed h tree
+    | not (wellFormed (bhStabilityWindow h) tree) =
+        Just "wellFormed violated"
+    | not (slotsOrdered tree) =
+        Just "slotsOrdered violated"
+    | otherwise = Nothing
+  where
+    slotsOrdered (Leaf _ _) = True
+    slotsOrdered (Fork s _ children) =
+        all (\c -> s < treeSlot c) children
+            && all slotsOrdered children
 
 {- | __Lean: @dfs_equiv_canonical@__
 
@@ -314,8 +300,10 @@ prop_dfsEquivCanonical h tree = do
                         ++ "\n  canonical: "
                         ++ show expected
 
-{- | Run a DFS walk through the Runner in following
-mode. Used by 'prop_dfsEquivCanonical'.
+{- | Run a DFS walk through the Runner. Starts in
+restoration and transitions to following on the first
+block (atTip=True for all blocks, since DFS walks
+need rollback support from the start).
 -}
 runDfsWalk
     :: (MonadIO m, Ord slot, GCompare col)
@@ -329,19 +317,20 @@ runDfsWalk h events =
                 (bhRollbackCol h)
                 (bhSentinel h)
                 Nothing
-        following <- resumeFollowing (bhInit h)
+        restoring <- start (bhInit h)
         phaseRef <-
-            liftIO $ newIORef (InFollowing 1 following)
+            liftIO $ newIORef (InRestoration restoring)
         let processEvent (Forward slot block) = do
                 phase <- liftIO $ readIORef phaseRef
                 phase' <-
-                    runTx $
-                        processBlock
-                            (bhRollbackCol h)
-                            maxBound
-                            slot
-                            block
-                            phase
+                    processBlock
+                        True
+                        runTx
+                        (bhRollbackCol h)
+                        maxBound
+                        slot
+                        block
+                        phase
                 liftIO $ writeIORef phaseRef phase'
             processEvent (RollBack target) = do
                 phase <- liftIO $ readIORef phaseRef
@@ -358,7 +347,7 @@ runDfsWalk h events =
                             writeIORef
                                 phaseRef
                                 (InFollowing n' f)
-                    InRestoration _ _ ->
+                    InRestoration _ ->
                         error
                             "runDfsWalk: rollback in\
                             \ restoration"
@@ -380,18 +369,19 @@ runCanonical h blocks =
                 (bhRollbackCol h)
                 (bhSentinel h)
                 Nothing
-        restoring <- startRestoring (bhInit h)
+        restoring <- start (bhInit h)
         foldM_
             ( \phase (slot, block) ->
-                runTx $
-                    processBlock
-                        (bhRollbackCol h)
-                        maxBound
-                        slot
-                        block
-                        phase
+                processBlock
+                    False
+                    runTx
+                    (bhRollbackCol h)
+                    maxBound
+                    slot
+                    block
+                    phase
             )
-            (InRestoration 0 restoring)
+            (InRestoration restoring)
             blocks
         bhSnapshot h runTx
 
@@ -447,19 +437,20 @@ prop_historyMatchesMetadata h blockMeta events canon =
                 (bhRollbackCol h)
                 (bhSentinel h)
                 Nothing
-        following <- resumeFollowing (bhInit h)
+        restoring <- start (bhInit h)
         phaseRef <-
-            liftIO $ newIORef (InFollowing 1 following)
+            liftIO $ newIORef (InRestoration restoring)
         let processEvent (Forward slot block) = do
                 phase <- liftIO $ readIORef phaseRef
                 phase' <-
-                    runTx $
-                        processBlock
-                            (bhRollbackCol h)
-                            maxBound
-                            slot
-                            block
-                            phase
+                    processBlock
+                        True
+                        runTx
+                        (bhRollbackCol h)
+                        maxBound
+                        slot
+                        block
+                        phase
                 liftIO $ writeIORef phaseRef phase'
             processEvent (RollBack target) = do
                 phase <- liftIO $ readIORef phaseRef
@@ -476,7 +467,7 @@ prop_historyMatchesMetadata h blockMeta events canon =
                             writeIORef
                                 phaseRef
                                 (InFollowing n' f)
-                    InRestoration _ _ ->
+                    InRestoration _ ->
                         error
                             "prop_historyMatchesMetadata:\
                             \ rollback in restoration"
@@ -486,24 +477,24 @@ prop_historyMatchesMetadata h blockMeta events canon =
             runTx $
                 Rollbacks.queryHistory
                     (bhRollbackCol h)
-        -- Drop the sentinel (first entry with no meta)
+        -- Drop sentinel, extract metadata
         let actual =
-                [ (slot, meta)
-                | (slot, rp) <- history
-                , slot /= bhSentinel h
-                , meta <- maybe [] pure (rpMeta rp)
+                [ (s, m)
+                | (s, rp) <- history
+                , s /= bhSentinel h
+                , m <- maybe [] pure (rpMeta rp)
                 ]
             expected =
-                [ (slot, meta)
-                | (slot, block) <- canon
-                , meta <- maybe [] pure (blockMeta block)
+                [ (s, m)
+                | (s, b) <- canon
+                , m <- maybe [] pure (blockMeta b)
                 ]
         if actual == expected
             then pure Nothing
             else
                 pure $
                     Just $
-                        "history metadata mismatch:"
+                        "historyMatchesMetadata failed:"
                             ++ "\n  actual:   "
                             ++ show actual
                             ++ "\n  expected: "
