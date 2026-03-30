@@ -112,7 +112,13 @@ processBlock
     -> Phase m cf col op block inv meta
     -- ^ Current phase
     -> m (Phase m cf col op block inv meta)
-processBlock atTip runTx rollbackCol k slot block
+processBlock
+    atTip
+    runTx
+    rollbackCol
+    k
+    slot
+    block
     (InRestoration restoring) =
         if atTip
             then do
@@ -130,7 +136,13 @@ processBlock atTip runTx rollbackCol k slot block
             else do
                 next <- runTx $ restore restoring block
                 pure $ InRestoration next
-processBlock _ runTx rollbackCol k slot block
+processBlock
+    _
+    runTx
+    rollbackCol
+    k
+    slot
+    block
     (InFollowing n following) =
         runTx $ do
             (inv, meta, next) <- follow following block
