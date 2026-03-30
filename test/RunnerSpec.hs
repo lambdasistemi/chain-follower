@@ -420,60 +420,61 @@ spec =
                                         start backend
                                     -- Follow n blocks from slotBase
                                     snapshotsRef <- newIORef []
-                                    finalPhase <- foldM
-                                        ( \phase slot -> do
-                                            newPhase <-
-                                                processBlock
-                                                    True
-                                                    runTx
-                                                    Rollbacks
-                                                    maxBound
-                                                    slot
-                                                    (mkBlock slot)
-                                                    phase
-                                            snap <-
-                                                snapshotState
-                                                    runTx
-                                            snapshots <-
-                                                readIORef
+                                    finalPhase <-
+                                        foldM
+                                            ( \phase slot -> do
+                                                newPhase <-
+                                                    processBlock
+                                                        True
+                                                        runTx
+                                                        Rollbacks
+                                                        maxBound
+                                                        slot
+                                                        (mkBlock slot)
+                                                        phase
+                                                snap <-
+                                                    snapshotState
+                                                        runTx
+                                                snapshots <-
+                                                    readIORef
+                                                        snapshotsRef
+                                                writeIORef
                                                     snapshotsRef
-                                            writeIORef
-                                                snapshotsRef
-                                                ( snapshots
-                                                    ++ [(slot, snap)]
-                                                )
-                                            pure newPhase
-                                        )
-                                        (InRestoration restoring)
-                                        [ slotBase
-                                        .. slotBase + n - 1
-                                        ]
+                                                    ( snapshots
+                                                        ++ [(slot, snap)]
+                                                    )
+                                                pure newPhase
+                                            )
+                                            (InRestoration restoring)
+                                            [ slotBase
+                                            .. slotBase + n - 1
+                                            ]
                                     -- Rollback to first block
                                     let target = slotBase
                                     case finalPhase of
-                                      InFollowing nPts f -> do
-                                        _ <-
-                                            runTx $
-                                                rollbackTo
-                                                    Rollbacks
-                                                    f
-                                                    nPts
-                                                    target
-                                        actual <-
-                                            snapshotState runTx
-                                        snapshots <-
-                                            readIORef
-                                                snapshotsRef
-                                        case snapshots of
-                                            ((_, expected) : _) ->
-                                                actual
-                                                    `shouldBe` expected
-                                            [] ->
-                                                error
-                                                    "no snapshots"
-                                      InRestoration _ ->
-                                        error
-                                            "expected following"
+                                        InFollowing nPts f -> do
+                                            _ <-
+                                                runTx $
+                                                    rollbackTo
+                                                        Rollbacks
+                                                        f
+                                                        nPts
+                                                        target
+                                            actual <-
+                                                snapshotState runTx
+                                            snapshots <-
+                                                readIORef
+                                                    snapshotsRef
+                                            case snapshots of
+                                                ((_, expected) : _) ->
+                                                    actual
+                                                        `shouldBe` expected
+                                                [] ->
+                                                    error
+                                                        "no snapshots"
+                                        InRestoration _ ->
+                                            error
+                                                "expected following"
 
             describe "Armageddon resync" $ do
                 it "cleanup + fresh re-restore matches canonical" $

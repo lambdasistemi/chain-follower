@@ -65,13 +65,13 @@ spec = describe "Lifecycle" $ do
                     foldM
                         ( \phase slot ->
                             processBlock
-                                    False
-                                    runTx
-                                    Rollbacks
-                                    maxBound
-                                    slot
-                                    (mkBlock slot)
-                                    phase
+                                False
+                                runTx
+                                Rollbacks
+                                maxBound
+                                slot
+                                (mkBlock slot)
+                                phase
                         )
                         (InRestoration restoring)
                         [1 .. 10]
@@ -87,13 +87,13 @@ spec = describe "Lifecycle" $ do
                 foldM_
                     ( \phase slot ->
                         processBlock
-                                True
-                                runTx
-                                Rollbacks
-                                rollbackWindow
-                                slot
-                                (mkBlock slot)
-                                phase
+                            True
+                            runTx
+                            Rollbacks
+                            rollbackWindow
+                            slot
+                            (mkBlock slot)
+                            phase
                     )
                     (InRestoration following)
                     [11 .. 15]
@@ -139,13 +139,13 @@ spec = describe "Lifecycle" $ do
                     foldM_
                         ( \phase block ->
                             processBlock
-                                    True
-                                    runTx
-                                    Rollbacks
-                                    rollbackWindow
-                                    (blockSlot block)
-                                    block
-                                    phase
+                                True
+                                runTx
+                                Rollbacks
+                                rollbackWindow
+                                (blockSlot block)
+                                block
+                                phase
                         )
                         (InRestoration restoring)
                         blocks

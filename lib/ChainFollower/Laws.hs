@@ -34,16 +34,16 @@ module ChainFollower.Laws
 -- ## Lean correspondence
 --
 -- +-----------------------------------+-------------------------------------------+
--- | Lean theorem                      | Haskell property                          |
+-- \| Lean theorem                      | Haskell property                          |
 -- +===================================+===========================================+
--- | @swap_inverse_restores@           | 'prop_backendIsSwap'                      |
+-- \| @swap_inverse_restores@           | 'prop_backendIsSwap'                      |
 -- +-----------------------------------+-------------------------------------------+
--- | @wellFormed@ + @slotsOrdered@     | 'prop_treeWellFormed'                     |
+-- \| @wellFormed@ + @slotsOrdered@     | 'prop_treeWellFormed'                     |
 -- +-----------------------------------+-------------------------------------------+
--- | @dfs_equiv_canonical@             | 'prop_dfsEquivCanonical'                  |
+-- \| @dfs_equiv_canonical@             | 'prop_dfsEquivCanonical'                  |
 -- +-----------------------------------+-------------------------------------------+
--- | @transition_transparency@ (Phase) | 'prop_dfsEquivCanonical' (restoration     |
--- |                                   | start + immediate transition)             |
+-- \| @transition_transparency@ (Phase) | 'prop_dfsEquivCanonical' (restoration     |
+-- \|                                   | start + immediate transition)             |
 -- +-----------------------------------+-------------------------------------------+
 
 import ChainFollower.Backend
