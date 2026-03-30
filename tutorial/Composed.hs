@@ -307,6 +307,5 @@ composedInit
     :: Init IO (T cf op) Block ComposedInv Int
 composedInit =
     Init
-        { startRestoring = pure composedRestoring
-        , resumeFollowing = pure composedFollowing
+        { start = pure composedRestoring
         }

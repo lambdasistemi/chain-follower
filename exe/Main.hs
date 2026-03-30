@@ -103,7 +103,7 @@ main = do
         putStrLn
             "  No rollback tip — fresh database."
         putStrLn
-            "  Call Init.startRestoring for bulk"
+            "  Call Init.start for bulk"
         putStrLn
             "  ingestion with no inverse tracking."
 
@@ -112,8 +112,8 @@ main = do
         putStrLn $
             "  Rollback tip: " ++ show mTip
 
-        r <- startRestoring backend
-        let phase0 = InRestoration 0 r
+        r <- start backend
+        let phase0 = InRestoration r
 
         putStrLn ""
         putStrLn
@@ -121,6 +121,7 @@ main = do
         _ <-
             foldPhase
                 runTx
+                False
                 phase0
                 [1 .. 15]
                 ( \slot ->
@@ -136,7 +137,7 @@ main = do
         putStrLn
             "  Near the chain tip. Set up rollback"
         putStrLn
-            "  sentinel and call Init.resumeFollowing."
+            "  sentinel and process with atTip=True."
         putStrLn
             "  Every block now stores inverses."
 
@@ -145,11 +146,8 @@ main = do
                 Rollbacks
                 15
                 Nothing
-        f <- resumeFollowing backend
-        countAtTransition <-
-            runTx $ Rollbacks.countPoints Rollbacks
-        let phase2start =
-                InFollowing countAtTransition f
+        r2 <- start backend
+        let phase2start = InRestoration r2
 
         putStrLn ""
         putStrLn
@@ -157,6 +155,7 @@ main = do
         phase2 <-
             foldPhase
                 runTx
+                True
                 phase2start
                 [16 .. 20]
                 ( \slot -> do
@@ -194,13 +193,12 @@ main = do
         putStrLn
             "  — in a real chain these would differ.)"
 
-        f4 <- resumeFollowing backend
-        n4 <-
-            runTx $ Rollbacks.countPoints Rollbacks
+        r4 <- start backend
         phase4 <-
             foldPhase
                 runTx
-                (InFollowing n4 f4)
+                True
+                (InRestoration r4)
                 [19 .. 22]
                 ( \slot ->
                     when (slot == 22) $ do
@@ -220,13 +218,12 @@ main = do
             "  Stay in FOLLOWING mode, catch up."
 
         -- ── Phase 5: Small-gap restart ──────────
-        f5 <- resumeFollowing backend
-        n5 <-
-            runTx $ Rollbacks.countPoints Rollbacks
+        r5 <- start backend
         phase5 <-
             foldPhase
                 runTx
-                (InFollowing n5 f5)
+                True
+                (InRestoration r5)
                 [23 .. 25]
                 ( \slot ->
                     when (slot == 25) $ do
@@ -277,11 +274,12 @@ main = do
 
         putStrLn ""
         putStrLn "  Re-restoring canonical chain 1..35:"
-        r6 <- startRestoring backend
+        r6 <- start backend
         _ <-
             foldPhase
                 runTx
-                (InRestoration 0 r6)
+                False
+                (InRestoration r6)
                 [1 .. 35]
                 ( \slot ->
                     when
@@ -305,15 +303,14 @@ main = do
                 Rollbacks
                 35
                 Nothing
-        f6 <- resumeFollowing backend
-        n6 <-
-            runTx $ Rollbacks.countPoints Rollbacks
+        r6f <- start backend
 
         putStrLn "  Following blocks 36..40:"
         phase6final <-
             foldPhase
                 runTx
-                (InFollowing n6 f6)
+                True
+                (InRestoration r6f)
                 [36 .. 40]
                 ( \slot ->
                     when (slot == 40) $ do
@@ -348,11 +345,11 @@ main = do
 
     -- Single-pass in a fresh temp DB
     singlePassState <- withTempDB $ \runTx2 -> do
-        r' <- startRestoring backend
+        r' <- start backend
         _ <-
             foldPhaseSimple
                 runTx2
-                (InRestoration 0 r')
+                (InRestoration r')
                 canonicalBlocks
         snapshotState runTx2
 
@@ -377,11 +374,11 @@ main = do
                     ++ [RollBack 18]
                     ++ map (\s -> Forward s (mkBlock s)) [19 .. 25]
     singlePass25 <- withTempDB $ \runTx3 -> do
-        r'' <- startRestoring backend
+        r'' <- start backend
         _ <-
             foldPhaseSimple
                 runTx3
-                (InRestoration 0 r'')
+                (InRestoration r'')
                 canonical25
         snapshotState runTx3
 
@@ -433,22 +430,24 @@ action after each.
 -}
 foldPhase
     :: RunTx
+    -> Bool
     -> TutPhase
     -> [Int]
     -> (Int -> IO ())
     -> IO TutPhase
-foldPhase runTx = go
+foldPhase runTx atTip = go
   where
     go phase [] _ = pure phase
     go phase (slot : rest) after = do
         phase' <-
-            runTx $
-                processBlock
-                    Rollbacks
-                    rollbackWindow
-                    slot
-                    (mkBlock slot)
-                    phase
+            processBlock
+                atTip
+                runTx
+                Rollbacks
+                rollbackWindow
+                slot
+                (mkBlock slot)
+                phase
         after slot
         go phase' rest after
 
@@ -464,17 +463,18 @@ foldPhaseSimple _ phase [] = pure phase
 foldPhaseSimple runTx phase ((slot, block) : rest) =
     do
         phase' <-
-            runTx $
-                processBlock
-                    Rollbacks
-                    rollbackWindow
-                    slot
-                    block
-                    phase
+            processBlock
+                False
+                runTx
+                Rollbacks
+                rollbackWindow
+                slot
+                block
+                phase
         foldPhaseSimple runTx phase' rest
 
 -- | Extract Following and count from a phase, or error.
 extractFollowing :: TutPhase -> IO (Int, TutFollowing)
 extractFollowing (InFollowing n f) = pure (n, f)
-extractFollowing (InRestoration _ _) =
+extractFollowing (InRestoration _) =
     error "extractFollowing: still in restoration"
