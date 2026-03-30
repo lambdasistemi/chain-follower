@@ -59,20 +59,21 @@ spec = describe "Lifecycle" $ do
                         Rollbacks
                         0
                         Nothing
-                restoring <- startRestoring backend
+                restoring <- start backend
                 -- Restore 10 blocks
                 finalRestore <-
                     foldM
                         ( \phase slot ->
-                            runTx $
-                                processBlock
+                            processBlock
+                                    False
+                                    runTx
                                     Rollbacks
                                     maxBound
                                     slot
                                     (mkBlock slot)
                                     phase
                         )
-                        (InRestoration 0 restoring)
+                        (InRestoration restoring)
                         [1 .. 10]
                 -- Transition to following
                 let currentSlot = 10
@@ -81,19 +82,20 @@ spec = describe "Lifecycle" $ do
                         Rollbacks
                         currentSlot
                         Nothing
-                following <- resumeFollowing backend
+                following <- start backend
                 -- Follow 5 more blocks
                 foldM_
                     ( \phase slot ->
-                        runTx $
-                            processBlock
+                        processBlock
+                                True
+                                runTx
                                 Rollbacks
                                 rollbackWindow
                                 slot
                                 (mkBlock slot)
                                 phase
                     )
-                    (InFollowing 1 following)
+                    (InRestoration following)
                     [11 .. 15]
                 -- Verify state matches restoring all 15
                 actual <- snapshotState runTx
@@ -103,18 +105,19 @@ spec = describe "Lifecycle" $ do
                             Rollbacks
                             0
                             Nothing
-                    restoring2 <- startRestoring backend
+                    restoring2 <- start backend
                     foldM_
                         ( \phase slot ->
-                            runTx2 $
-                                processBlock
-                                    Rollbacks
-                                    maxBound
-                                    slot
-                                    (mkBlock slot)
-                                    phase
+                            processBlock
+                                False
+                                runTx2
+                                Rollbacks
+                                maxBound
+                                slot
+                                (mkBlock slot)
+                                phase
                         )
-                        (InRestoration 0 restoring2)
+                        (InRestoration restoring2)
                         [1 .. 15]
                     snapshotState runTx2
                 actual `shouldBe` expected
@@ -132,18 +135,19 @@ spec = describe "Lifecycle" $ do
                             Rollbacks
                             0
                             Nothing
-                    restoring <- startRestoring backend
+                    restoring <- start backend
                     foldM_
                         ( \phase block ->
-                            runTx $
-                                processBlock
+                            processBlock
+                                    True
+                                    runTx
                                     Rollbacks
                                     rollbackWindow
                                     (blockSlot block)
                                     block
                                     phase
                         )
-                        (InRestoration 0 restoring)
+                        (InRestoration restoring)
                         blocks
                     snapshotState runTx
                 stateB <- withTempDB $ \runTx -> do
@@ -152,18 +156,19 @@ spec = describe "Lifecycle" $ do
                             Rollbacks
                             0
                             Nothing
-                    following <- resumeFollowing backend
+                    following <- start backend
                     foldM_
                         ( \phase block ->
-                            runTx $
-                                processBlock
-                                    Rollbacks
-                                    rollbackWindow
-                                    (blockSlot block)
-                                    block
-                                    phase
+                            processBlock
+                                True
+                                runTx
+                                Rollbacks
+                                rollbackWindow
+                                (blockSlot block)
+                                block
+                                phase
                         )
-                        (InFollowing 1 following)
+                        (InRestoration following)
                         blocks
                     snapshotState runTx
                 stateA `shouldBe` stateB
@@ -182,18 +187,19 @@ spec = describe "Lifecycle" $ do
                                     0
                                     Nothing
                             following <-
-                                resumeFollowing backend
+                                start backend
                             foldM_
                                 ( \phase slot ->
-                                    runTx $
-                                        processBlock
-                                            Rollbacks
-                                            rollbackWindow
-                                            slot
-                                            (mkBlock slot)
-                                            phase
+                                    processBlock
+                                        True
+                                        runTx
+                                        Rollbacks
+                                        rollbackWindow
+                                        slot
+                                        (mkBlock slot)
+                                        phase
                                 )
-                                (InFollowing 1 following)
+                                (InRestoration following)
                                 [1 .. 5]
                             snapshotState runTx
                     -- Session 2: reopen and verify

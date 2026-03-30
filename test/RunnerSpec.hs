@@ -19,7 +19,7 @@ import ChainFollower.Runner
     , rollbackTo
     )
 import Composed (ComposedInv, composedInit)
-import Control.Monad (foldM_, forM_, when)
+import Control.Monad (foldM, foldM_, forM_, when)
 import Data.Function (fix)
 import Data.IORef
     ( newIORef
@@ -87,27 +87,26 @@ runChainEvents
     -> [ChainEvent Int Block]
     -> IO StateSnapshot
 runChainEvents runTx events = do
-    -- Start in following mode so all blocks have
-    -- rollback support from the beginning.
-    -- Sentinel at 0 so it sorts before all block slots
-    -- in RocksDB lexicographic ordering.
+    -- Start in restoration, transition on first block
+    -- (atTip=True so rollback support is available).
     runTx $
         Rollbacks.armageddonSetup Rollbacks 0 Nothing
-    following <- resumeFollowing backend
-    phaseRef <- newIORef (InFollowing 1 following)
+    restoring <- start backend
+    phaseRef <- newIORef (InRestoration restoring)
 
     forM_ events $ \event -> do
         phase <- readIORef phaseRef
         case event of
             Forward slot block -> do
                 newPhase <-
-                    runTx $
-                        processBlock
-                            Rollbacks
-                            maxBound
-                            slot
-                            block
-                            phase
+                    processBlock
+                        True
+                        runTx
+                        Rollbacks
+                        maxBound
+                        slot
+                        block
+                        phase
                 writeIORef phaseRef newPhase
             RollBack target -> do
                 case phase of
@@ -129,7 +128,7 @@ runChainEvents runTx events = do
                                     "runChainEvents: rollback"
                                         ++ " impossible to "
                                         ++ show target
-                    InRestoration _ _ ->
+                    InRestoration _ ->
                         error $
                             "runChainEvents: rollback"
                                 ++ " in restoration"
@@ -142,18 +141,19 @@ runCanonicalClean
 runCanonicalClean runTx blocks = do
     runTx $
         Rollbacks.armageddonSetup Rollbacks 0 Nothing
-    restoring <- startRestoring backend
+    restoring <- start backend
     foldM_
         ( \phase (slot, block) ->
-            runTx $
-                processBlock
-                    Rollbacks
-                    maxBound
-                    slot
-                    block
-                    phase
+            processBlock
+                False
+                runTx
+                Rollbacks
+                maxBound
+                slot
+                block
+                phase
         )
-        (InRestoration 0 restoring)
+        (InRestoration restoring)
         blocks
     snapshotState runTx
 
@@ -170,22 +170,23 @@ runChainEventsWithPruning
 runChainEventsWithPruning runTx events = do
     runTx $
         Rollbacks.armageddonSetup Rollbacks 0 Nothing
-    following <- resumeFollowing backend
-    phaseRef <- newIORef (InFollowing 1 following)
-    maxSeenRef <- newIORef 1
+    restoring <- start backend
+    phaseRef <- newIORef (InRestoration restoring)
+    maxSeenRef <- newIORef 0
 
     forM_ events $ \event -> do
         phase <- readIORef phaseRef
         case event of
             Forward slot block -> do
                 newPhase <-
-                    runTx $
-                        processBlock
-                            Rollbacks
-                            rollbackWindow
-                            slot
-                            block
-                            phase
+                    processBlock
+                        True
+                        runTx
+                        Rollbacks
+                        rollbackWindow
+                        slot
+                        block
+                        phase
                 writeIORef phaseRef newPhase
                 -- Verify count consistency
                 let tracked = rollbackCount newPhase
@@ -225,7 +226,7 @@ runChainEventsWithPruning runTx events = do
                                 Rollbacks.countPoints
                                     Rollbacks
                         n' `shouldBe` actual
-                    InRestoration _ _ ->
+                    InRestoration _ ->
                         error $
                             "runChainEventsWithPruning:"
                                 ++ " rollback in restoration"
@@ -415,20 +416,21 @@ spec =
                                             Rollbacks
                                             0
                                             Nothing
-                                    following <-
-                                        resumeFollowing backend
+                                    restoring <-
+                                        start backend
                                     -- Follow n blocks from slotBase
                                     snapshotsRef <- newIORef []
-                                    foldM_
+                                    finalPhase <- foldM
                                         ( \phase slot -> do
                                             newPhase <-
-                                                runTx $
-                                                    processBlock
-                                                        Rollbacks
-                                                        maxBound
-                                                        slot
-                                                        (mkBlock slot)
-                                                        phase
+                                                processBlock
+                                                    True
+                                                    runTx
+                                                    Rollbacks
+                                                    maxBound
+                                                    slot
+                                                    (mkBlock slot)
+                                                    phase
                                             snap <-
                                                 snapshotState
                                                     runTx
@@ -442,29 +444,36 @@ spec =
                                                 )
                                             pure newPhase
                                         )
-                                        (InFollowing 1 following)
+                                        (InRestoration restoring)
                                         [ slotBase
                                         .. slotBase + n - 1
                                         ]
                                     -- Rollback to first block
                                     let target = slotBase
-                                    _ <-
-                                        runTx $
-                                            rollbackTo
-                                                Rollbacks
-                                                following
-                                                (1 + n)
-                                                target
-                                    actual <- snapshotState runTx
-                                    snapshots <-
-                                        readIORef snapshotsRef
-                                    case snapshots of
-                                        ((_, expected) : _) ->
-                                            actual
-                                                `shouldBe` expected
-                                        [] ->
-                                            error
-                                                "no snapshots"
+                                    case finalPhase of
+                                      InFollowing nPts f -> do
+                                        _ <-
+                                            runTx $
+                                                rollbackTo
+                                                    Rollbacks
+                                                    f
+                                                    nPts
+                                                    target
+                                        actual <-
+                                            snapshotState runTx
+                                        snapshots <-
+                                            readIORef
+                                                snapshotsRef
+                                        case snapshots of
+                                            ((_, expected) : _) ->
+                                                actual
+                                                    `shouldBe` expected
+                                            [] ->
+                                                error
+                                                    "no snapshots"
+                                      InRestoration _ ->
+                                        error
+                                            "expected following"
 
             describe "Armageddon resync" $ do
                 it "cleanup + fresh re-restore matches canonical" $
