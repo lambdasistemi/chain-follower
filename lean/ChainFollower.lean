@@ -2,3 +2,4 @@ import ChainFollower.SwapPartition
 import ChainFollower.Rollback
 import ChainFollower.Pruning
 import ChainFollower.BlockTree
+import ChainFollower.Phase
