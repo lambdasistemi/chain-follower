@@ -36,7 +36,12 @@ build:
 # Run tests
 test:
     #!/usr/bin/env bash
-    cabal test all -O0
+    nix run .#tests --quiet
+
+# Build Lean proofs
+lean:
+    #!/usr/bin/env bash
+    cd lean && lake build
 
 # Build documentation
 build-docs:
@@ -59,5 +64,6 @@ ci:
     set -euo pipefail
     just build
     just test
+    just lean
     just format-check
     just hlint
