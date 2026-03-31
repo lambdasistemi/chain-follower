@@ -117,23 +117,32 @@ processBlock
     atTip
     runTx
     rollbackCol
-    k
+    _k
     slot
     block
     (InRestoration restoring) =
         if atTip
             then do
-                -- Transition first, then process via follow
                 following <- toFollowing restoring
-                n <- runTx $ Rollbacks.countPoints rollbackCol
-                processBlock
-                    atTip
-                    runTx
-                    rollbackCol
-                    k
-                    slot
-                    block
-                    (InFollowing n following)
+                -- Atomic: wipe checkpoint + sentinel +
+                -- first following block in one transaction
+                runTx $ do
+                    -- Wipe restoration checkpoint
+                    _ <-
+                        Rollbacks.armageddonCleanup
+                            rollbackCol
+                            maxBound
+                    -- First following block — no sentinel needed
+                    (inv, meta, next) <-
+                        follow following block
+                    Rollbacks.storeRollbackPoint
+                        rollbackCol
+                        slot
+                        RollbackPoint
+                            { rpInverses = [inv]
+                            , rpMeta = meta
+                            }
+                    pure $ InFollowing 1 next
             else do
                 next <- runTx $ do
                     r <- restore restoring block
