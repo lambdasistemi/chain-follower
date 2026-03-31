@@ -49,6 +49,8 @@
           packages.default = project.hsPkgs.chain-follower.components.library;
           packages.tutorial =
             project.hsPkgs.chain-follower.components.exes.chain-follower-tutorial;
+          packages.tests =
+            project.hsPkgs.chain-follower.components.tests.tests;
           devShells.default = project.shell;
         };
     };

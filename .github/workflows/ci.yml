@@ -25,20 +25,53 @@ jobs:
           nix build --quiet
           .#default
           .#tutorial
+          .#tests
           .#devShells.x86_64-linux.default.inputDerivation
 
-  build:
+  test:
     needs: build-gate
     runs-on: nixos
     steps:
       - uses: actions/checkout@v4
-
       - uses: cachix/cachix-action@v15
         with:
           name: paolino
           authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+      - name: Run tests
+        run: nix run .#tests --quiet
 
-      - name: Build and test
-        run: |
-          echo "tests: True" > cabal.project.local
-          nix develop --quiet -c just ci
+  lean:
+    needs: build-gate
+    runs-on: nixos
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/cachix-action@v15
+        with:
+          name: paolino
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+      - name: Build Lean proofs
+        run: nix develop --quiet -c bash -c "cd lean && lake build"
+
+  format:
+    needs: build-gate
+    runs-on: nixos
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/cachix-action@v15
+        with:
+          name: paolino
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+      - name: Check formatting
+        run: nix develop --quiet -c just format-check
+
+  hlint:
+    needs: build-gate
+    runs-on: nixos
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/cachix-action@v15
+        with:
+          name: paolino
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+      - name: Lint
+        run: nix develop --quiet -c just hlint
