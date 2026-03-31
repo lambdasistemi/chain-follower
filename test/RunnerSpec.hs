@@ -102,7 +102,6 @@ runChainEvents runTx events = do
                     processBlock
                         True
                         runTx
-                        (pure ())
                         Rollbacks
                         maxBound
                         slot
@@ -148,7 +147,6 @@ runCanonicalClean runTx blocks = do
             processBlock
                 False
                 runTx
-                (pure ())
                 Rollbacks
                 maxBound
                 slot
@@ -184,7 +182,6 @@ runChainEventsWithPruning runTx events = do
                     processBlock
                         True
                         runTx
-                        (pure ())
                         Rollbacks
                         rollbackWindow
                         slot
@@ -430,7 +427,6 @@ spec =
                                                     processBlock
                                                         True
                                                         runTx
-                                                        (pure ())
                                                         Rollbacks
                                                         maxBound
                                                         slot

@@ -8,6 +8,7 @@ module ChainFollower.Runner
 
       -- * Query
     , rollbackCount
+    , readCheckpoint
     ) where
 
 -- \|
@@ -99,10 +100,6 @@ processBlock
     -- ^ At tip: trigger transition if restoring
     -> (forall a. T m cf col op a -> m a)
     -- ^ Transaction runner
-    -> T m cf col op ()
-    {- ^ Per-block action inside the transaction
-    (e.g. checkpoint update)
-    -}
     -> RollbackCol col slot inv meta
     -- ^ Rollback column selector
     -> Int
@@ -119,7 +116,6 @@ processBlock
 processBlock
     atTip
     runTx
-    onBlock
     rollbackCol
     k
     slot
@@ -133,7 +129,6 @@ processBlock
                 processBlock
                     atTip
                     runTx
-                    onBlock
                     rollbackCol
                     k
                     slot
@@ -142,13 +137,20 @@ processBlock
             else do
                 next <- runTx $ do
                     r <- restore restoring block
-                    onBlock
+                    -- Checkpoint: store current slot as
+                    -- sentinel rollback point (no inverses)
+                    Rollbacks.storeRollbackPoint
+                        rollbackCol
+                        slot
+                        RollbackPoint
+                            { rpInverses = []
+                            , rpMeta = Nothing
+                            }
                     pure r
                 pure $ InRestoration next
 processBlock
     _
     runTx
-    onBlock
     rollbackCol
     k
     slot
@@ -156,7 +158,6 @@ processBlock
     (InFollowing n following) =
         runTx $ do
             (inv, meta, next) <- follow following block
-            onBlock
             Rollbacks.storeRollbackPoint
                 rollbackCol
                 slot
@@ -210,3 +211,17 @@ rollbackTo rollbackCol following count target = do
                 count - deleted
             Rollbacks.RollbackImpossible -> count
     pure (result, count')
+
+{- | Read the restoration checkpoint from the
+rollback column. Returns the latest slot if present,
+'Nothing' if no blocks have been processed.
+
+Use this on startup to determine the intersection
+point for chain sync.
+-}
+readCheckpoint
+    :: (Monad m, GCompare col)
+    => RollbackCol col slot inv meta
+    -- ^ Rollback column selector
+    -> T m cf col op (Maybe slot)
+readCheckpoint = Rollbacks.queryTip
