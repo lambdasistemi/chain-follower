@@ -443,6 +443,7 @@ foldPhase runTx atTip = go
             processBlock
                 atTip
                 runTx
+                (pure ())
                 Rollbacks
                 rollbackWindow
                 slot
@@ -466,6 +467,7 @@ foldPhaseSimple runTx phase ((slot, block) : rest) =
             processBlock
                 False
                 runTx
+                (pure ())
                 Rollbacks
                 rollbackWindow
                 slot

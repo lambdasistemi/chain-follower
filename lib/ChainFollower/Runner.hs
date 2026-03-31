@@ -99,6 +99,10 @@ processBlock
     -- ^ At tip: trigger transition if restoring
     -> (forall a. T m cf col op a -> m a)
     -- ^ Transaction runner
+    -> T m cf col op ()
+    {- ^ Per-block action inside the transaction
+    (e.g. checkpoint update)
+    -}
     -> RollbackCol col slot inv meta
     -- ^ Rollback column selector
     -> Int
@@ -115,6 +119,7 @@ processBlock
 processBlock
     atTip
     runTx
+    onBlock
     rollbackCol
     k
     slot
@@ -128,17 +133,22 @@ processBlock
                 processBlock
                     atTip
                     runTx
+                    onBlock
                     rollbackCol
                     k
                     slot
                     block
                     (InFollowing n following)
             else do
-                next <- runTx $ restore restoring block
+                next <- runTx $ do
+                    r <- restore restoring block
+                    onBlock
+                    pure r
                 pure $ InRestoration next
 processBlock
     _
     runTx
+    onBlock
     rollbackCol
     k
     slot
@@ -146,6 +156,7 @@ processBlock
     (InFollowing n following) =
         runTx $ do
             (inv, meta, next) <- follow following block
+            onBlock
             Rollbacks.storeRollbackPoint
                 rollbackCol
                 slot
