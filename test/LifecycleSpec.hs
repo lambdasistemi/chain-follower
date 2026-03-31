@@ -67,7 +67,6 @@ spec = describe "Lifecycle" $ do
                             processBlock
                                 False
                                 runTx
-                                (pure ())
                                 Rollbacks
                                 maxBound
                                 slot
@@ -90,7 +89,6 @@ spec = describe "Lifecycle" $ do
                         processBlock
                             True
                             runTx
-                            (pure ())
                             Rollbacks
                             rollbackWindow
                             slot
@@ -113,7 +111,6 @@ spec = describe "Lifecycle" $ do
                             processBlock
                                 False
                                 runTx2
-                                (pure ())
                                 Rollbacks
                                 maxBound
                                 slot
@@ -144,7 +141,6 @@ spec = describe "Lifecycle" $ do
                             processBlock
                                 True
                                 runTx
-                                (pure ())
                                 Rollbacks
                                 rollbackWindow
                                 (blockSlot block)
@@ -166,7 +162,6 @@ spec = describe "Lifecycle" $ do
                             processBlock
                                 True
                                 runTx
-                                (pure ())
                                 Rollbacks
                                 rollbackWindow
                                 (blockSlot block)
@@ -198,7 +193,6 @@ spec = describe "Lifecycle" $ do
                                     processBlock
                                         True
                                         runTx
-                                        (pure ())
                                         Rollbacks
                                         rollbackWindow
                                         slot
