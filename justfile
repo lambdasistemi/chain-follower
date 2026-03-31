@@ -53,6 +53,13 @@ deploy-docs:
     #!/usr/bin/env bash
     nix --quiet develop github:paolino/dev-assets?dir=mkdocs -c mkdocs gh-deploy --force
 
+# Generate function call graph (SVG + DOT)
+call-graph:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cabal build all -O0 --ghc-options="-fwrite-ide-info -hiedir=.hie"
+    calligraphy -i .hie --show-module-path --show-line -d call-graph.dot -s call-graph.svg
+
 # Full CI pipeline
 ci:
     #!/usr/bin/env bash

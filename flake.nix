@@ -35,6 +35,7 @@
                 cabal-fmt = indexTool;
                 fourmolu = indexTool;
                 hlint = indexTool;
+                calligraphy = indexTool;
               };
               buildInputs = [
                 pkgs.just
@@ -42,6 +43,7 @@
                 pkgs.elan
                 pkgs.mkdocs
                 mkdocs.from-nixpkgs
+                pkgs.graphviz
               ];
             };
           };

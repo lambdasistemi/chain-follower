@@ -1,4 +1,5 @@
 dist-newstyle/
+.hie/
 result
 .llm/
 WIP.md
