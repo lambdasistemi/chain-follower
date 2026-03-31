@@ -38,11 +38,7 @@ jobs:
           name: paolino
           authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
 
-      - name: Build
-        run: nix build --quiet
-
-      - name: Check formatting
-        run: nix develop --quiet -c just format-check
-
-      - name: Lint
-        run: nix develop --quiet -c just hlint
+      - name: Build and test
+        run: |
+          echo "tests: True" > cabal.project.local
+          nix develop --quiet -c just ci
