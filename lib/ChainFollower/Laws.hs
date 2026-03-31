@@ -189,6 +189,7 @@ prop_backendIsSwap h seed (slot, block) =
                     processBlock
                         True
                         runTx
+                        (pure ())
                         (bhRollbackCol h)
                         maxBound
                         s
@@ -334,6 +335,7 @@ runDfsWalk h events =
                     processBlock
                         True
                         runTx
+                        (pure ())
                         (bhRollbackCol h)
                         maxBound
                         slot
@@ -383,6 +385,7 @@ runCanonical h blocks =
                 processBlock
                     False
                     runTx
+                    (pure ())
                     (bhRollbackCol h)
                     maxBound
                     slot
@@ -454,6 +457,7 @@ prop_historyMatchesMetadata h blockMeta events canon =
                     processBlock
                         True
                         runTx
+                        (pure ())
                         (bhRollbackCol h)
                         maxBound
                         slot
