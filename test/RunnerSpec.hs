@@ -30,7 +30,6 @@ import Database.KV.Transaction
     ( Transaction
     , mapColumns
     )
-import Database.RocksDB (BatchOp, ColumnFamily)
 import Test.Hspec
     ( Spec
     , describe
@@ -49,7 +48,7 @@ import Test.QuickCheck
     )
 import TutorialDB
     ( AllCols (..)
-    , RunTx
+    , MemRunTx
     , StateSnapshot
     , accounts
     , mkBlock
@@ -63,12 +62,7 @@ import Types (Block (..), Transfer (..))
 backend
     :: Init
         IO
-        ( Transaction
-            IO
-            ColumnFamily
-            AllCols
-            BatchOp
-        )
+        (Transaction IO cf AllCols op)
         Block
         ComposedInv
         Int
@@ -83,7 +77,7 @@ slotBase = 100
 
 -- | Run a sequence of chain events through the Runner.
 runChainEvents
-    :: RunTx
+    :: MemRunTx
     -> [ChainEvent Int Block]
     -> IO StateSnapshot
 runChainEvents runTx events = do
@@ -137,7 +131,7 @@ runChainEvents runTx events = do
 
 -- | Run the canonical chain cleanly via restoration.
 runCanonicalClean
-    :: RunTx -> [(Int, Block)] -> IO StateSnapshot
+    :: MemRunTx -> [(Int, Block)] -> IO StateSnapshot
 runCanonicalClean runTx blocks = do
     runTx $
         Rollbacks.armageddonSetup Rollbacks 0 Nothing
@@ -164,7 +158,7 @@ verifies the tracked count matches the actual
 DB count. Returns (snapshot, finalCount, maxSeen).
 -}
 runChainEventsWithPruning
-    :: RunTx
+    :: MemRunTx
     -> [ChainEvent Int Block]
     -> IO (StateSnapshot, Int, Int)
 runChainEventsWithPruning runTx events = do

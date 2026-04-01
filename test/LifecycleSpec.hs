@@ -15,7 +15,6 @@ import Database.KV.Transaction
     ( Transaction
     , mapColumns
     )
-import Database.RocksDB (BatchOp, ColumnFamily)
 import System.IO.Temp (withSystemTempDirectory)
 import Test.Hspec
     ( Spec
@@ -37,12 +36,7 @@ import Types (Block (..))
 backend
     :: Init
         IO
-        ( Transaction
-            IO
-            ColumnFamily
-            AllCols
-            BatchOp
-        )
+        (Transaction IO cf AllCols op)
         Block
         ComposedInv
         Int

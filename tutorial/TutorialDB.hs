@@ -6,6 +6,8 @@ module TutorialDB
     , withTempDB
     , withPersistentDB
     , RunTx
+    , MemRunTx
+    , allCodecs
 
       -- * Block generation
     , mkBlock
@@ -42,6 +44,7 @@ import Composed
     , UnifiedCols (..)
     )
 import Control.Lens (prism')
+import Data.ByteString (ByteString)
 import Data.ByteString.Char8 qualified as BS8
 import Data.Default (Default (..))
 import Data.Type.Equality ((:~:) (..))
@@ -49,6 +52,7 @@ import Database.KV.Database
     ( KV
     , mkColumns
     )
+import Database.KV.InMemory (mkInMemoryDatabase)
 import Database.KV.RocksDB (mkRocksDBDatabase)
 import Database.KV.Transaction
     ( Codecs (..)
@@ -69,7 +73,6 @@ import Database.RocksDB
     , DB (..)
     , withDBCF
     )
-import System.IO.Temp (withSystemTempDirectory)
 import Text.Read (readMaybe)
 import Types
     ( Block (..)
@@ -99,10 +102,14 @@ instance GCompare AllCols where
 -- * Transaction runner
 
 -- | Polymorphic transaction runner over AllCols.
-type RunTx =
+type RunTx cf op =
     forall a
-     . Transaction IO ColumnFamily AllCols BatchOp a
+     . Transaction IO cf AllCols op a
     -> IO a
+
+-- | In-memory transaction runner.
+type MemRunTx =
+    RunTx Int (Int, ByteString, Maybe ByteString)
 
 -- * DB setup
 
@@ -146,7 +153,7 @@ allCodecs =
             )
     ]
 
-mkRunTx :: DB -> RunTx
+mkRunTx :: DB -> RunTx ColumnFamily BatchOp
 mkRunTx db =
     runTransactionUnguarded $
         mkRocksDBDatabase db $
@@ -154,17 +161,25 @@ mkRunTx db =
                 (columnFamilies db)
                 (fromPairList allCodecs)
 
--- | Run with a temporary DB (for tests).
-withTempDB :: (RunTx -> IO a) -> IO a
-withTempDB action =
-    withSystemTempDirectory "chain-follower-test" $
-        \dbPath ->
-            withDBCF dbPath cfg columnFamilyNames $
-                \db -> action (mkRunTx db)
+-- | Run with an in-memory DB (for tests).
+withTempDB
+    :: ( RunTx
+            Int
+            (Int, ByteString, Maybe ByteString)
+         -> IO a
+       )
+    -> IO a
+withTempDB action = do
+    db <-
+        mkInMemoryDatabase $
+            mkColumns [0 ..] (fromPairList allCodecs)
+    action $ runTransactionUnguarded db
 
--- | Run with a persistent DB at a given path.
+-- | Run with a persistent RocksDB at a given path.
 withPersistentDB
-    :: FilePath -> (RunTx -> IO a) -> IO a
+    :: FilePath
+    -> (RunTx ColumnFamily BatchOp -> IO a)
+    -> IO a
 withPersistentDB dbPath action =
     withDBCF dbPath cfg columnFamilyNames $
         \db -> action (mkRunTx db)
@@ -196,7 +211,7 @@ mkBlock slot =
 
 -- | Query all account balances.
 queryAllBalances
-    :: RunTx -> IO [(String, Maybe Int)]
+    :: RunTx cf op -> IO [(String, Maybe Int)]
 queryAllBalances runTx =
     runTx $
         mapM
@@ -211,7 +226,7 @@ queryAllBalances runTx =
 
 -- | Query all audit flags.
 queryAllFlags
-    :: RunTx -> IO [(String, Maybe String)]
+    :: RunTx cf op -> IO [(String, Maybe String)]
 queryAllFlags runTx =
     runTx $
         mapM
@@ -226,7 +241,7 @@ queryAllFlags runTx =
 
 -- | Query all audit notes.
 queryAllNotes
-    :: RunTx -> IO [(String, Maybe String)]
+    :: RunTx cf op -> IO [(String, Maybe String)]
 queryAllNotes runTx =
     runTx $
         mapM
@@ -248,7 +263,7 @@ data StateSnapshot = StateSnapshot
     deriving stock (Show, Eq)
 
 -- | Capture the full state.
-snapshotState :: RunTx -> IO StateSnapshot
+snapshotState :: RunTx cf op -> IO StateSnapshot
 snapshotState runTx =
     StateSnapshot
         <$> queryAllBalances runTx

@@ -17,8 +17,8 @@ import ChainFollower.MockChain
     , dfs
     )
 import Composed (ComposedInv, composedInit)
+import Data.ByteString (ByteString)
 import Database.KV.Transaction (mapColumns)
-import Database.RocksDB (BatchOp, ColumnFamily)
 import Test.Hspec
     ( Spec
     , describe
@@ -48,9 +48,9 @@ import Types (Block (..), Transfer (..))
 harness
     :: BackendHarness
         IO
-        ColumnFamily
+        Int
         AllCols
-        BatchOp
+        (Int, ByteString, Maybe ByteString)
         Int
         Block
         ComposedInv

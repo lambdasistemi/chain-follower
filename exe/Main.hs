@@ -13,11 +13,11 @@ import ChainFollower.Runner
     )
 import Composed (ComposedInv, composedInit)
 import Control.Monad (forM_, unless, when)
+import Data.ByteString (ByteString)
 import Database.KV.Transaction
     ( Transaction
     , mapColumns
     )
-import Database.RocksDB (BatchOp, ColumnFamily)
 import TutorialDB
     ( AllCols (..)
     , ChainEvent (..)
@@ -74,7 +74,7 @@ section title = do
 backend
     :: Init
         IO
-        (Transaction IO ColumnFamily AllCols BatchOp)
+        (Transaction IO cf AllCols op)
         Block
         ComposedInv
         Int
@@ -396,15 +396,21 @@ main = do
     putStrLn "  Tutorial complete."
     putStrLn ""
 
--- * Phase type aliases
+-- * In-memory type aliases
+
+-- | In-memory column family type.
+type MemCF = Int
+
+-- | In-memory operation type.
+type MemOp = (Int, ByteString, Maybe ByteString)
 
 -- | Concrete phase for the tutorial.
 type TutPhase =
     Phase
         IO
-        ColumnFamily
+        MemCF
         AllCols
-        BatchOp
+        MemOp
         Block
         ComposedInv
         Int
@@ -413,12 +419,7 @@ type TutPhase =
 type TutFollowing =
     Following
         IO
-        ( Transaction
-            IO
-            ColumnFamily
-            AllCols
-            BatchOp
-        )
+        (Transaction IO MemCF AllCols MemOp)
         Block
         ComposedInv
         Int
@@ -429,7 +430,7 @@ type TutFollowing =
 action after each.
 -}
 foldPhase
-    :: RunTx
+    :: RunTx MemCF MemOp
     -> Bool
     -> TutPhase
     -> [Int]
@@ -455,7 +456,7 @@ foldPhase runTx atTip = go
 (for verification).
 -}
 foldPhaseSimple
-    :: RunTx
+    :: RunTx MemCF MemOp
     -> TutPhase
     -> [(Int, Block)]
     -> IO TutPhase
