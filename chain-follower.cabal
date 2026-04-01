@@ -85,7 +85,6 @@ library tutorial
     , rocksdb-haskell-jprupp                   >=2.1  && <2.2
     , rocksdb-kv-transactions
     , rocksdb-kv-transactions:kv-transactions
-    , temporary                                >=1.3  && <1.4
 
 executable chain-follower-tutorial
   import:           warnings
@@ -94,9 +93,9 @@ executable chain-follower-tutorial
   default-language: Haskell2010
   build-depends:
     , base                                     >=4.17 && <5
+    , bytestring                               >=0.10 && <0.13
     , chain-follower
     , chain-follower:tutorial
-    , rocksdb-haskell-jprupp                   >=2.1  && <2.2
     , rocksdb-kv-transactions:kv-transactions
 
 test-suite tests
@@ -112,11 +111,11 @@ test-suite tests
 
   build-depends:
     , base                                     >=4.17 && <5
+    , bytestring                               >=0.10 && <0.13
     , chain-follower
     , chain-follower:tutorial
     , hspec                                    >=2.10 && <2.12
     , QuickCheck                               >=2.14 && <2.16
-    , rocksdb-haskell-jprupp                   >=2.1  && <2.2
     , rocksdb-kv-transactions:kv-transactions
     , temporary                                >=1.3  && <1.4
 
