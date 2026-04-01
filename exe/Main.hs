@@ -13,6 +13,7 @@ import ChainFollower.Runner
     )
 import Composed (ComposedInv, composedInit)
 import Control.Monad (forM_, unless, when)
+import Control.Tracer (nullTracer)
 import Data.ByteString (ByteString)
 import Database.KV.Transaction
     ( Transaction
@@ -442,6 +443,7 @@ foldPhase runTx atTip = go
     go phase (slot : rest) after = do
         phase' <-
             processBlock
+                nullTracer
                 atTip
                 runTx
                 Rollbacks
@@ -465,6 +467,7 @@ foldPhaseSimple runTx phase ((slot, block) : rest) =
     do
         phase' <-
             processBlock
+                nullTracer
                 False
                 runTx
                 Rollbacks

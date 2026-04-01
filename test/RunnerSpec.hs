@@ -20,6 +20,7 @@ import ChainFollower.Runner
     )
 import Composed (ComposedInv, composedInit)
 import Control.Monad (foldM, foldM_, forM_, when)
+import Control.Tracer (nullTracer)
 import Data.Function (fix)
 import Data.IORef
     ( newIORef
@@ -94,6 +95,7 @@ runChainEvents runTx events = do
             Forward slot block -> do
                 newPhase <-
                     processBlock
+                        nullTracer
                         True
                         runTx
                         Rollbacks
@@ -139,6 +141,7 @@ runCanonicalClean runTx blocks = do
     foldM_
         ( \phase (slot, block) ->
             processBlock
+                nullTracer
                 False
                 runTx
                 Rollbacks
@@ -174,6 +177,7 @@ runChainEventsWithPruning runTx events = do
             Forward slot block -> do
                 newPhase <-
                     processBlock
+                        nullTracer
                         True
                         runTx
                         Rollbacks
@@ -419,6 +423,7 @@ spec =
                                             ( \phase slot -> do
                                                 newPhase <-
                                                     processBlock
+                                                        nullTracer
                                                         True
                                                         runTx
                                                         Rollbacks

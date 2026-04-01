@@ -11,6 +11,7 @@ import ChainFollower.Runner
     )
 import Composed (ComposedInv, composedInit)
 import Control.Monad (foldM, foldM_)
+import Control.Tracer (nullTracer)
 import Database.KV.Transaction
     ( Transaction
     , mapColumns
@@ -59,6 +60,7 @@ spec = describe "Lifecycle" $ do
                     foldM
                         ( \phase slot ->
                             processBlock
+                                nullTracer
                                 False
                                 runTx
                                 Rollbacks
@@ -81,6 +83,7 @@ spec = describe "Lifecycle" $ do
                 foldM_
                     ( \phase slot ->
                         processBlock
+                            nullTracer
                             True
                             runTx
                             Rollbacks
@@ -103,6 +106,7 @@ spec = describe "Lifecycle" $ do
                     foldM_
                         ( \phase slot ->
                             processBlock
+                                nullTracer
                                 False
                                 runTx2
                                 Rollbacks
@@ -133,6 +137,7 @@ spec = describe "Lifecycle" $ do
                     foldM_
                         ( \phase block ->
                             processBlock
+                                nullTracer
                                 True
                                 runTx
                                 Rollbacks
@@ -154,6 +159,7 @@ spec = describe "Lifecycle" $ do
                     foldM_
                         ( \phase block ->
                             processBlock
+                                nullTracer
                                 True
                                 runTx
                                 Rollbacks
@@ -185,6 +191,7 @@ spec = describe "Lifecycle" $ do
                             foldM_
                                 ( \phase slot ->
                                     processBlock
+                                        nullTracer
                                         True
                                         runTx
                                         Rollbacks
