@@ -74,6 +74,7 @@ import ChainFollower.Runner
     )
 import Control.Monad (foldM, foldM_)
 import Control.Monad.IO.Class (MonadIO (..))
+import Control.Tracer (nullTracer)
 import Data.IORef
     ( newIORef
     , readIORef
@@ -187,6 +188,7 @@ prop_backendIsSwap h seed (slot, block) =
             foldM
                 ( \p (s, b) ->
                     processBlock
+                        nullTracer
                         True
                         runTx
                         (bhRollbackCol h)
@@ -332,6 +334,7 @@ runDfsWalk h events =
                 phase <- liftIO $ readIORef phaseRef
                 phase' <-
                     processBlock
+                        nullTracer
                         True
                         runTx
                         (bhRollbackCol h)
@@ -381,6 +384,7 @@ runCanonical h blocks =
         foldM_
             ( \phase (slot, block) ->
                 processBlock
+                    nullTracer
                     False
                     runTx
                     (bhRollbackCol h)
@@ -452,6 +456,7 @@ prop_historyMatchesMetadata h blockMeta events canon =
                 phase <- liftIO $ readIORef phaseRef
                 phase' <-
                     processBlock
+                        nullTracer
                         True
                         runTx
                         (bhRollbackCol h)

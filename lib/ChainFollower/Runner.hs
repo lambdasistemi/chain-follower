@@ -2,6 +2,9 @@ module ChainFollower.Runner
     ( -- * Chain follower state
       Phase (..)
 
+      -- * Trace events
+    , RunnerEvent (..)
+
       -- * Running
     , processBlock
     , rollbackTo
@@ -43,6 +46,7 @@ import ChainFollower.Rollbacks.Store qualified as Rollbacks
 import ChainFollower.Rollbacks.Types
     ( RollbackPoint (..)
     )
+import Control.Tracer (Tracer, traceWith)
 import Database.KV.Transaction
     ( GCompare
     , Transaction
@@ -73,6 +77,20 @@ data Phase m cf col op block inv meta
         -- ^ Rollback point count
         (Following m (T m cf col op) block inv meta)
 
+{- | Events emitted by 'processBlock' for
+observability. Parameterized over the slot type.
+-}
+data RunnerEvent slot
+    = -- | Block processed in restoration mode.
+      BlockRestored slot
+    | -- | Block processed in following mode.
+      BlockFollowed slot
+    | {- | Phase transitioned from restoration to
+      following at this slot.
+      -}
+      PhaseTransition slot
+    deriving stock (Show, Eq)
+
 -- | Current number of rollback points.
 rollbackCount
     :: Phase m cf col op block inv meta -> Int
@@ -96,7 +114,9 @@ in @m@ (e.g. journal replay).
 -}
 processBlock
     :: (Ord slot, GCompare col, Monad m)
-    => Bool
+    => Tracer m (RunnerEvent slot)
+    -- ^ Tracer for runner events
+    -> Bool
     -- ^ At tip: trigger transition if restoring
     -> (forall a. T m cf col op a -> m a)
     -- ^ Transaction runner
@@ -114,6 +134,7 @@ processBlock
     -- ^ Current phase
     -> m (Phase m cf col op block inv meta)
 processBlock
+    tracer
     atTip
     runTx
     rollbackCol
@@ -123,10 +144,11 @@ processBlock
     (InRestoration restoring) =
         if atTip
             then do
+                traceWith tracer (PhaseTransition slot)
                 following <- toFollowing restoring
                 -- Atomic: wipe checkpoint + sentinel +
                 -- first following block in one transaction
-                runTx $ do
+                result <- runTx $ do
                     -- Wipe restoration checkpoint
                     _ <-
                         Rollbacks.armageddonCleanup
@@ -143,6 +165,8 @@ processBlock
                             , rpMeta = meta
                             }
                     pure $ InFollowing 1 next
+                traceWith tracer (BlockFollowed slot)
+                pure result
             else do
                 next <- runTx $ do
                     r <- restore restoring block
@@ -156,16 +180,18 @@ processBlock
                             , rpMeta = Nothing
                             }
                     pure r
+                traceWith tracer (BlockRestored slot)
                 pure $ InRestoration next
 processBlock
+    tracer
     _
     runTx
     rollbackCol
     k
     slot
     block
-    (InFollowing n following) =
-        runTx $ do
+    (InFollowing n following) = do
+        result <- runTx $ do
             (inv, meta, next) <- follow following block
             Rollbacks.storeRollbackPoint
                 rollbackCol
@@ -181,6 +207,8 @@ processBlock
                     n'
                     (k + 1)
             pure $ InFollowing (n' - pruned) next
+        traceWith tracer (BlockFollowed slot)
+        pure result
 
 {- | Roll back to the given slot.
 
