@@ -138,7 +138,7 @@ main = do
         putStrLn
             "  Near the chain tip. Set up rollback"
         putStrLn
-            "  sentinel and process with atTip=True."
+            "  sentinel and process with withinStabilityWindow=True."
         putStrLn
             "  Every block now stores inverses."
 
@@ -437,14 +437,14 @@ foldPhase
     -> [Int]
     -> (Int -> IO ())
     -> IO TutPhase
-foldPhase runTx atTip = go
+foldPhase runTx withinStabilityWindow = go
   where
     go phase [] _ = pure phase
     go phase (slot : rest) after = do
         phase' <-
             processBlock
                 nullTracer
-                atTip
+                withinStabilityWindow
                 runTx
                 Rollbacks
                 rollbackWindow

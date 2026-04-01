@@ -312,8 +312,8 @@ prop_dfsEquivCanonical h tree = do
 
 {- | Run a DFS walk through the Runner. Starts in
 restoration and transitions to following on the first
-block (atTip=True for all blocks, since DFS walks
-need rollback support from the start).
+block (withinStabilityWindow=True for all blocks,
+since DFS walks need rollback support from the start).
 -}
 runDfsWalk
     :: (MonadIO m, Ord slot, GCompare col)

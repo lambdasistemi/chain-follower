@@ -115,7 +115,7 @@ continuation.
 
 The transition to following happens later, when the
 Runner calls 'toFollowing' on the 'Restoring' record
-(triggered by the @atTip@ signal in 'processBlock').
+(triggered by the @withinStabilityWindow@ signal in 'processBlock').
 -}
 newtype Init m t block inv meta = Init
     { start

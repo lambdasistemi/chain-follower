@@ -83,7 +83,7 @@ runChainEvents
     -> IO StateSnapshot
 runChainEvents runTx events = do
     -- Start in restoration, transition on first block
-    -- (atTip=True so rollback support is available).
+    -- (withinStabilityWindow=True so rollback support is available).
     runTx $
         Rollbacks.armageddonSetup Rollbacks 0 Nothing
     restoring <- start backend

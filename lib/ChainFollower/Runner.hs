@@ -30,7 +30,7 @@ module ChainFollower.Runner
 -- transaction as the backend's mutations.
 --
 -- The Runner transitions from restoration to following
--- when the caller signals @atTip = True@. The transition
+-- when the caller signals @withinStabilityWindow = True@. The transition
 -- calls 'toFollowing' on the backend (which may replay
 -- journals) and enters following mode with fresh rollback
 -- state.
@@ -99,16 +99,18 @@ rollbackCount (InFollowing n _) = n
 
 {- | Process a block in the current phase.
 
-Takes an @atTip@ signal and a transaction runner.
-Returns in @m@ (not @t@) because the restoration →
-following transition calls 'toFollowing' which runs
-in @m@ (e.g. journal replay).
+Takes a @withinStabilityWindow@ signal and a
+transaction runner. Returns in @m@ (not @t@)
+because the restoration → following transition
+calls 'toFollowing' which runs in @m@ (e.g.
+journal replay).
 
-- @InRestoration@ + @atTip = False@: ingest block
-  in transaction, stay in restoration.
-- @InRestoration@ + @atTip = True@: ingest block
-  in transaction, then call 'toFollowing' in @m@,
-  enter following with 0 rollback points.
+- @InRestoration@ + @withinStabilityWindow = False@:
+  ingest block in transaction, stay in restoration.
+- @InRestoration@ + @withinStabilityWindow = True@:
+  ingest block in transaction, then call
+  'toFollowing' in @m@, enter following with 0
+  rollback points.
 - @InFollowing@: process block in transaction with
   rollback point storage and pruning.
 -}
@@ -117,7 +119,7 @@ processBlock
     => Tracer m (RunnerEvent slot)
     -- ^ Tracer for runner events
     -> Bool
-    -- ^ At tip: trigger transition if restoring
+    -- ^ Within stability window: trigger transition if restoring
     -> (forall a. T m cf col op a -> m a)
     -- ^ Transaction runner
     -> RollbackCol col slot inv meta
@@ -135,14 +137,14 @@ processBlock
     -> m (Phase m cf col op block inv meta)
 processBlock
     tracer
-    atTip
+    withinStabilityWindow
     runTx
     rollbackCol
     _k
     slot
     block
     (InRestoration restoring) =
-        if atTip
+        if withinStabilityWindow
             then do
                 traceWith tracer (PhaseTransition slot)
                 following <- toFollowing restoring
