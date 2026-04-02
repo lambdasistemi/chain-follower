@@ -1239,7 +1239,7 @@ consensus protocol. No rollback can exceed K blocks. This constrains
 the block tree model: all non-canonical branches have depth at most K.</p>
 <p>In practice, K determines how many rollback points the chain follower
 must retain. Points older than K slots behind the tip are <em>final</em> and
-can be pruned via <code>pruneOldPoints</code>.</p>
+can be pruned via <code>pruneExcess</code> (called automatically by <code>processBlock</code>).</p>
 <p>See <a href="../block-tree/">Block Tree</a> for how K constrains the tree structure.</p>
 
 

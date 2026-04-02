@@ -643,17 +643,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#pruneoldpoints" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pruneOldPoints
-      
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -1254,17 +1243,6 @@ chronological order and deleting each rollback point. The target slot's point is
 kept.</p>
 <p>Returns <code>RollbackSucceeded n</code> (number of points deleted) or
 <code>RollbackImpossible</code> if the target slot was not found.</p>
-<h2 id="pruneoldpoints">pruneOldPoints</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nf">pruneOldPoints</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">    </span><span class="ow">::</span><span class="w"> </span><span class="p">(</span><span class="kt">Ord</span><span class="w"> </span><span class="n">slot</span><span class="p">,</span><span class="w"> </span><span class="kt">Monad</span><span class="w"> </span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="kt">GCompare</span><span class="w"> </span><span class="n">col</span><span class="p">)</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span><span class="ow">=&gt;</span><span class="w"> </span><span class="kt">RollbackCol</span><span class="w"> </span><span class="n">col</span><span class="w"> </span><span class="n">slot</span><span class="w"> </span><span class="n">inv</span><span class="w"> </span><span class="nb">()</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span><span class="ow">-&gt;</span><span class="w"> </span><span class="n">slot</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">    </span><span class="ow">-&gt;</span><span class="w"> </span><span class="kt">T</span><span class="w"> </span><span class="n">m</span><span class="w"> </span><span class="n">cf</span><span class="w"> </span><span class="n">col</span><span class="w"> </span><span class="n">op</span><span class="w"> </span><span class="kt">Int</span>
-</code></pre></div>
-<p>Prunes rollback points strictly below the finality slot. Points before finality
-can never be rolled back to, so their storage can be reclaimed.</p>
-<p>Call this periodically as the finality window advances. Returns the number of
-points pruned.</p>
 
 
 
